@@ -128,5 +128,6 @@ export async function handleWebhook(
       return { outcome: 'ignored_type', changed: 0 };
   }
   db.prepare('UPDATE webhook_event SET processed_note = ? WHERE id = ?').run(`changed ${changed}`, event.id);
+  console.log('verified webhook processed', { type: event.event_type, id: event.id.slice(0, 12), changed });
   return { outcome: 'processed', changed };
 }
