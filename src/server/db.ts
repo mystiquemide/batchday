@@ -90,6 +90,13 @@ CREATE TABLE IF NOT EXISTS supplier_update (
   model_id TEXT,
   created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS webhook_event (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL,
+  verified INTEGER NOT NULL,
+  received_at TEXT NOT NULL,
+  processed_note TEXT
+);
 CREATE INDEX IF NOT EXISTS supplier_update_ws ON supplier_update(workspace_id, created_at);
 `;
 

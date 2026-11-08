@@ -10,7 +10,8 @@ import { openDb } from './db.js';
 import { tick } from './engine.js';
 
 const port = Number(process.env.PORT ?? 3000);
-const publicBaseUrl = (process.env.PUBLIC_BASE_URL ?? `http://localhost:${port}`).replace(/\/$/, '');
+// Render provides RENDER_EXTERNAL_URL; PUBLIC_BASE_URL overrides it for custom domains.
+const publicBaseUrl = (process.env.PUBLIC_BASE_URL ?? process.env.RENDER_EXTERNAL_URL ?? `http://localhost:${port}`).replace(/\/$/, '');
 const distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../dist');
 
 const db = openDb();

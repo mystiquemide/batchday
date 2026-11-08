@@ -3,6 +3,7 @@ import type { Db } from './db.js';
 import { PayPalError, chargeVault, createPaymentToken, createSetupToken, deletePaymentToken, refundCapture } from './paypal.js';
 import { RefundRejected, evaluateRisk, refundReservation } from './risk.js';
 import { type Drafter, draftNotices, geminiDrafter, markNotified } from './notices.js';
+import { type VerifyFn, handleWebhook, verifyWithPayPal } from './webhooks.js';
 import { chargeLog, runEngine, type EngineSummary } from './engine.js';
 import { PlanRejected, getPlanVersion, savePlan } from './plan.js';
 import { UpdateRejected, geminiParser, getUpdate, listUpdates, previewImpact, resolveUpdate, submitUpdate } from './supplier.js';
@@ -58,6 +59,7 @@ export interface AppDeps {
   now?: () => Date;
   parseSupplierText?: typeof geminiParser;
   draftNotice?: Drafter;
+  verifyWebhook?: VerifyFn;
 }
 
 export function createApp({
@@ -67,9 +69,20 @@ export function createApp({
   now = () => new Date(),
   parseSupplierText = geminiParser,
   draftNotice = geminiDrafter,
+  verifyWebhook = verifyWithPayPal,
 }: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
+
+  // FR-021: raw body, so PayPal can verify the signature over exactly what it sent.
+  app.post('/api/paypal/webhook', express.text({ type: '*/*', limit: '200kb' }), async (req, res) => {
+    const raw = typeof req.body === 'string' ? req.body : '';
+    const headers = Object.fromEntries(Object.entries(req.headers).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v]));
+    const result = await handleWebhook(db, raw, headers, verifyWebhook, now());
+    // 200 for anything well-formed so PayPal stops retrying; unverified events change nothing.
+    res.status(result.outcome === 'bad_request' ? 400 : 200).json({ outcome: result.outcome });
+  });
+
   app.use(express.json({ limit: '100kb' }));
 
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
