@@ -1,0 +1,98 @@
+/* Landing page. Everything is scoped under .lp so the app console styles are unaffected. */
+.lp {
+  --lp-canvas: #f9f9fb;
+  --lp-band: #f3f3f7;
+  --lp-white: #ffffff;
+  --lp-text: #15191e;
+  --lp-text-2: #60646c;
+  --lp-text-3: #8b8d98;
+  --lp-hairline: #e3e6ea;
+  --lp-accent: #1f4fd1;
+  --lp-accent-hover: #1a43b3;
+  --lp-dark: #0b0f14;
+  --lp-on-dark: #fcfcfd;
+  --lp-max: 1120px;
+
+  min-height: 100vh;
+  background: var(--lp-canvas);
+  color: var(--lp-text);
+  font-family: 'Inter Variable', Inter, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.lp a { color: inherit; text-decoration: none; }
+.lp :focus-visible { outline: 3px solid var(--lp-accent); outline-offset: 3px; border-radius: 4px; }
+
+/* Buttons */
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background-color 150ms ease;
+}
+.lp .lp-btn-primary { background: var(--lp-accent); color: #ffffff; }
+.lp .lp-btn-primary:hover { background: var(--lp-accent-hover); }
+
+/* [0] Nav */
+.lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--lp-white);
+  border-bottom: 1px solid var(--lp-hairline);
+}
+.lp-nav-inner {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  max-width: var(--lp-max);
+  height: 64px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.lp-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.lp-brand-mark { color: var(--lp-accent); }
+.lp-nav-links {
+  display: flex;
+  gap: 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lp-nav-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--lp-text-2);
+  transition: color 150ms ease;
+}
+.lp-nav-links a:hover { color: var(--lp-text); }
+.lp-nav .lp-btn { margin-left: auto; }
+
+@media (max-width: 767px) {
+  .lp-nav-inner { height: 56px; gap: 16px; }
+  .lp-nav-links { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp * { transition: none !important; }
+}
