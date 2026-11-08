@@ -93,6 +93,61 @@
   .lp-nav-links { display: none; }
 }
 
+/* Shared layout and type */
+.lp-container { max-width: var(--lp-max); margin: 0 auto; padding: 0 24px; }
+.lp-h1 {
+  margin: 0;
+  font-size: 64px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--lp-text);
+}
+.lp-lead {
+  margin: 24px 0 0;
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--lp-text-2);
+}
+.lp-btn-lg { height: 48px; padding: 0 24px; font-size: 16px; }
+.lp .lp-textlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--lp-accent);
+}
+.lp-textlink svg { transition: transform 150ms ease; }
+.lp-textlink:hover svg { transform: translateX(2px); }
+.lp-caption { margin-top: 16px; font-size: 14px; line-height: 1.5; color: var(--lp-text-3); }
+
+/* [1] Hero */
+.lp-hero { padding: 112px 0 128px; background: var(--lp-canvas); }
+.lp-hero-copy { max-width: 760px; }
+.lp-hero-copy .lp-lead { max-width: 600px; }
+.lp-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; margin-top: 40px; }
+.lp-hero-note { margin: 16px 0 0; font-size: 14px; color: var(--lp-text-3); }
+.lp-hero-shot { margin: 72px 0 0; }
+.lp-frame {
+  overflow: hidden;
+  background: var(--lp-white);
+  border: 1px solid var(--lp-hairline);
+  border-radius: 12px;
+}
+.lp-frame img { display: block; width: 100%; height: auto; }
+
+@media (max-width: 767px) {
+  .lp-hero { padding: 64px 0 80px; }
+  .lp-h1 { font-size: 40px; }
+  .lp-lead { font-size: 18px; margin-top: 20px; }
+  .lp-hero-actions { margin-top: 32px; gap: 20px; }
+  .lp-hero-shot { margin-top: 48px; }
+  /* Keep the Gantt legible on phones: show the grid side at readable size and let the frame scroll. */
+  .lp-frame { overflow-x: auto; }
+  .lp-frame img { width: 720px; max-width: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lp * { transition: none !important; }
 }
