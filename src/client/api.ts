@@ -1,7 +1,7 @@
-import type { BatchSummary, CampaignView, PlanDependency, PlanTask, ReservationView } from '../shared/types';
+import type { BatchSummary, CampaignView, ChargeLogRow, PlanDependency, PlanTask, ReservationView, TaskScheduleInput } from '../shared/types';
 
 export class ApiFailure extends Error {
-  constructor(message: string, readonly status: number, readonly debugId: string | null) {
+  constructor(message: string, readonly status: number, readonly debugId: string | null, readonly problems: string[] = []) {
     super(message);
   }
 }
@@ -14,12 +14,24 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
     credentials: 'same-origin',
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiFailure(data.error ?? `Request failed (${res.status})`, res.status, data.debugId ?? null);
+  if (!res.ok) throw new ApiFailure(data.error ?? `Request failed (${res.status})`, res.status, data.debugId ?? null, data.problems ?? []);
   return data as T;
+}
+
+export interface EngineSummary {
+  charged: number;
+  failed: number;
+  revoked: number;
+  unknown: number;
+  skipped: number;
+  outsideWindow: number;
 }
 
 export interface WorkspaceData {
   campaign: CampaignView;
+  planVersion: number;
+  charges: ChargeLogRow[];
+  engine?: EngineSummary;
   plan: { tasks: PlanTask[]; dependencies: PlanDependency[] };
   batches: BatchSummary[];
   reservations: ReservationView[];
@@ -43,6 +55,7 @@ export interface PublicReservation {
 export const api = {
   getWorkspace: () => request<WorkspaceData>('GET', '/api/workspace'),
   startWorkspace: () => request<{ workspaceId: string }>('POST', '/api/workspace'),
+  savePlan: (planVersion: number, tasks: TaskScheduleInput[]) => request<WorkspaceData>('PUT', '/api/workspace/plan', { planVersion, tasks }),
   getCampaign: (id: string) => request<PublicCampaign>('GET', `/api/public/campaign/${id}`),
   reserve: (id: string) => request<{ approveUrl: string; statusPath: string }>('POST', `/api/public/campaign/${id}/reserve`),
   getReservation: (token: string) => request<PublicReservation>('GET', `/api/public/reservation/${token}`),

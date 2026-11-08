@@ -1,17 +1,44 @@
-import { useEffect, useMemo, useState } from 'react';
-import { BryntumGantt } from '@bryntum/gantt-react-community';
-import { ApiFailure, api, formatDate, type WorkspaceData } from './api';
+import { useEffect, useRef, useState } from 'react';
+import type { TaskScheduleInput } from '../shared/types';
+import { ApiFailure, api, formatDate, type EngineSummary, type WorkspaceData } from './api';
+import { ChargeLog } from './ChargeLog';
+import { PlanGantt } from './PlanGantt';
 import { StateBadge } from './StateBadge';
+
+type SaveState =
+  | { kind: 'idle' }
+  | { kind: 'saving' }
+  | { kind: 'saved'; engine: EngineSummary | undefined }
+  | { kind: 'rejected'; message: string; problems: string[] };
+
+function engineText(e: EngineSummary | undefined): string {
+  if (!e) return 'Plan saved.';
+  const parts = [
+    e.charged && `${e.charged} charged`,
+    e.failed && `${e.failed} failed`,
+    e.revoked && `${e.revoked} revoked at PayPal`,
+    e.unknown && `${e.unknown} awaiting PayPal`,
+    e.outsideWindow && `${e.outsideWindow} outside the 20-day window`,
+  ].filter(Boolean);
+  return `Plan saved. ${parts.length ? parts.join(', ') + '.' : 'No reservations to charge.'}`;
+}
 
 export function Console() {
   const [data, setData] = useState<WorkspaceData | null>(null);
   const [status, setStatus] = useState<'loading' | 'none' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [loadKey, setLoadKey] = useState(0);
+  const [save, setSave] = useState<SaveState>({ kind: 'idle' });
+  const version = useRef(0);
+  const queue = useRef<Promise<void>>(Promise.resolve());
 
   async function load() {
     try {
-      setData(await api.getWorkspace());
+      const next = await api.getWorkspace();
+      version.current = next.planVersion;
+      setData(next);
+      setLoadKey((k) => k + 1);
       setStatus('ready');
     } catch (err) {
       if (err instanceof ApiFailure && err.status === 404) setStatus('none');
@@ -37,24 +64,36 @@ export function Console() {
     }
   }
 
-  const project = useMemo(() => {
-    if (!data) return null;
-    return {
-      startDate: data.plan.tasks.map((t) => t.startDate).sort()[0],
-      tasks: data.plan.tasks.map((t) => ({
-        id: t.id,
-        name: t.name,
-        startDate: t.startDate,
-        duration: t.duration,
-        durationUnit: 'day',
-      })),
-      dependencies: data.plan.dependencies.map((d) => ({ id: d.id, from: d.fromTask, to: d.toTask })),
-    };
-  }, [data]);
+  async function refresh() {
+    try {
+      const next = await api.getWorkspace();
+      version.current = next.planVersion;
+      setData(next);
+    } catch {
+      /* keep the current view; the next save or refresh will retry */
+    }
+  }
+
+  // Saves run one at a time so each carries the version returned by the previous one.
+  function saveSchedule(tasks: TaskScheduleInput[]) {
+    queue.current = queue.current.then(async () => {
+      setSave({ kind: 'saving' });
+      try {
+        const next = await api.savePlan(version.current, tasks);
+        version.current = next.planVersion;
+        setData(next);
+        setSave({ kind: 'saved', engine: next.engine });
+      } catch (err) {
+        const f = err instanceof ApiFailure ? err : null;
+        setSave({ kind: 'rejected', message: f?.message ?? 'Could not save the plan.', problems: f?.problems ?? [] });
+        await load(); // put the chart back on the last accepted plan
+      }
+    });
+  }
 
   if (status === 'loading') return <main className="page"><p role="status">Loading workspace...</p></main>;
   if (status === 'error') return <main className="page"><p role="alert" className="error">{error}</p></main>;
-  if (status === 'none' || !data || !project) {
+  if (status === 'none' || !data) {
     return (
       <main className="page narrow">
         <h1>Batchday</h1>
@@ -91,16 +130,19 @@ export function Console() {
         </div>
       </header>
 
+      <div className="savebar" aria-live="polite">
+        {save.kind === 'idle' && <span className="muted">Drag or edit tasks. Downstream tasks reschedule, then the plan saves and the charge engine runs.</span>}
+        {save.kind === 'saving' && <span>Saving plan and running the charge engine...</span>}
+        {save.kind === 'saved' && <span className="ok">{engineText(save.engine)}</span>}
+        {save.kind === 'rejected' && (
+          <span role="alert" className="error">
+            {save.message} {save.problems.join('. ')}. The last saved plan was restored.
+          </span>
+        )}
+      </div>
+
       <section className="gantt" aria-label="Production plan">
-        <BryntumGantt
-          project={project}
-          readOnly
-          columns={[
-            { type: 'name', width: 220 },
-            { type: 'startdate', width: 130 },
-            { type: 'duration', width: 90 },
-          ]}
-        />
+        <PlanGantt tasks={data.plan.tasks} dependencies={data.plan.dependencies} loadKey={loadKey} onScheduleChange={saveSchedule} />
       </section>
 
       <section className="panels">
@@ -129,7 +171,7 @@ export function Console() {
             <p className="muted">No reservations yet. Share the buyer link above.</p>
           ) : (
             <table>
-              <thead><tr><th>Buyer</th><th>Batch</th><th>State</th><th>Reserved</th></tr></thead>
+              <thead><tr><th>Buyer</th><th>Batch</th><th>State</th><th>Reserved</th><th>Charged</th></tr></thead>
               <tbody>
                 {data.reservations.map((r, i) => (
                   <tr key={i}>
@@ -137,13 +179,18 @@ export function Console() {
                     <td>{r.batchNumber ?? '-'}</td>
                     <td><StateBadge state={r.state} /></td>
                     <td>{new Date(r.createdAt).toLocaleString()}</td>
+                    <td>{r.chargedAt ? new Date(r.chargedAt).toLocaleString() : '-'}{r.message && <div className="muted small">{r.message}</div>}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
-          <button className="secondary" onClick={load}>Refresh</button>
+          <button className="secondary" onClick={refresh}>Refresh</button>
         </div>
+      </section>
+
+      <section className="panels single">
+        <ChargeLog rows={data.charges} />
       </section>
     </main>
   );

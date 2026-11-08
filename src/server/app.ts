@@ -1,6 +1,8 @@
 import express, { type Request, type Response } from 'express';
 import type { Db } from './db.js';
-import { PayPalError, createPaymentToken, createSetupToken } from './paypal.js';
+import { PayPalError, chargeVault, createPaymentToken, createSetupToken } from './paypal.js';
+import { chargeLog, runEngine, type EngineSummary } from './engine.js';
+import { PlanRejected, getPlanVersion, savePlan } from './plan.js';
 import {
   abandon,
   attachSetupToken,
@@ -39,11 +41,16 @@ function paypalErrorBody(err: unknown) {
 export interface AppDeps {
   db: Db;
   publicBaseUrl: string;
-  paypal?: { createSetupToken: typeof createSetupToken; createPaymentToken: typeof createPaymentToken };
+  paypal?: { createSetupToken: typeof createSetupToken; createPaymentToken: typeof createPaymentToken; chargeVault: typeof chargeVault };
   now?: () => Date;
 }
 
-export function createApp({ db, publicBaseUrl, paypal = { createSetupToken, createPaymentToken }, now = () => new Date() }: AppDeps) {
+export function createApp({
+  db,
+  publicBaseUrl,
+  paypal = { createSetupToken, createPaymentToken, chargeVault },
+  now = () => new Date(),
+}: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '100kb' }));
@@ -73,16 +80,36 @@ export function createApp({ db, publicBaseUrl, paypal = { createSetupToken, crea
     res.status(201).json({ workspaceId: id });
   });
 
+  const workspaceView = (id: string, engine?: EngineSummary) => ({
+    campaign: getCampaign(db, id),
+    planVersion: getPlanVersion(db, id),
+    plan: getPlan(db, id),
+    batches: getBatches(db, id, now()),
+    reservations: listReservations(db, id).map((r) => toView(r, false)),
+    charges: chargeLog(db, id),
+    windowDays: WINDOW_DAYS,
+    ...(engine ? { engine } : {}),
+  });
+
   app.get('/api/workspace', (req, res) => {
     const id = sellerWorkspace(req, res);
     if (!id) return;
-    res.json({
-      campaign: getCampaign(db, id),
-      plan: getPlan(db, id),
-      batches: getBatches(db, id, now()),
-      reservations: listReservations(db, id).map((r) => toView(r, false)),
-      windowDays: WINDOW_DAYS,
-    });
+    res.json(workspaceView(id));
+  });
+
+  // FR-003, FR-004, FR-008: save the rescheduled plan, then run the charge engine on it.
+  app.put('/api/workspace/plan', async (req, res) => {
+    const id = sellerWorkspace(req, res);
+    if (!id) return;
+    if (!req.is('application/json')) return res.status(415).json({ error: 'JSON required.' });
+    try {
+      savePlan(db, id, req.body, now());
+    } catch (err) {
+      if (err instanceof PlanRejected) return res.status(err.status).json({ error: err.message, problems: err.problems });
+      throw err;
+    }
+    const engine = await runEngine({ db, paypal, now }, id);
+    res.json(workspaceView(id, engine));
   });
 
   // ---- Buyer pages ----

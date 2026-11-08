@@ -36,3 +36,11 @@ th { color: #5b6470; font-weight: 500; }
 .s-charged { background: #e3f7e9; color: #146c2e; }
 .s-abandoned, .s-cancelled, .s-revoked { background: #f2f2f2; color: #5b6470; }
 .s-charge_failed, .s-at_risk { background: #fdecea; color: #b42318; }
+.savebar { padding: 10px 16px; background: #fff; border-bottom: 1px solid #e3e6ea; font-size: 14px; min-height: 20px; }
+.ok { color: #146c2e; }
+.panels.single { grid-template-columns: 1fr; padding-top: 0; }
+.scroll { overflow-x: auto; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.o-completed { background: #e3f7e9; color: #146c2e; }
+.o-declined, .o-failed, .o-revoked { background: #fdecea; color: #b42318; }
+.o-unknown, .o-pending { background: #fff3d6; color: #7a5300; }

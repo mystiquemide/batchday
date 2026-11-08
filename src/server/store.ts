@@ -71,9 +71,17 @@ export function getCampaign(db: Db, workspaceId: string): CampaignView | null {
 export function getPlan(db: Db, workspaceId: string): { tasks: PlanTask[]; dependencies: PlanDependency[] } {
   const tasks = (
     db
-      .prepare('SELECT id, name, start_date, duration, kind, batch_number FROM task WHERE workspace_id = ? ORDER BY id')
-      .all(workspaceId) as { id: number; name: string; start_date: string; duration: number; kind: PlanTask['kind']; batch_number: number | null }[]
-  ).map((t) => ({ id: t.id, name: t.name, startDate: t.start_date, duration: t.duration, kind: t.kind, batchNumber: t.batch_number }));
+      .prepare(
+        'SELECT id, name, start_date, duration, kind, batch_number, constraint_type, constraint_date FROM task WHERE workspace_id = ? ORDER BY id',
+      )
+      .all(workspaceId) as {
+      id: number; name: string; start_date: string; duration: number; kind: PlanTask['kind']; batch_number: number | null;
+      constraint_type: PlanTask['constraintType']; constraint_date: string | null;
+    }[]
+  ).map((t) => ({
+    id: t.id, name: t.name, startDate: t.start_date, duration: t.duration, kind: t.kind, batchNumber: t.batch_number,
+    constraintType: t.constraint_type, constraintDate: t.constraint_date,
+  }));
   const dependencies = (
     db.prepare('SELECT id, from_task, to_task FROM dependency WHERE workspace_id = ? ORDER BY id').all(workspaceId) as {
       id: number; from_task: number; to_task: number;

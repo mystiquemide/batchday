@@ -59,7 +59,33 @@ CREATE TABLE IF NOT EXISTS reservation (
   refund_id TEXT
 );
 CREATE INDEX IF NOT EXISTS reservation_ws ON reservation(workspace_id, state);
+CREATE TABLE IF NOT EXISTS charge_attempt (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id TEXT NOT NULL REFERENCES workspace(id),
+  reservation_id TEXT NOT NULL REFERENCES reservation(id),
+  attempt_no INTEGER NOT NULL,
+  request_id TEXT NOT NULL UNIQUE,
+  amount TEXT NOT NULL,
+  ship_date TEXT NOT NULL,
+  outcome TEXT NOT NULL CHECK (outcome IN ('PENDING','COMPLETED','DECLINED','FAILED','REVOKED','UNKNOWN','SKIPPED')),
+  http_status INTEGER,
+  paypal_debug_id TEXT,
+  order_id TEXT,
+  capture_id TEXT,
+  detail TEXT,
+  created_at TEXT NOT NULL,
+  finished_at TEXT,
+  UNIQUE (reservation_id, attempt_no)
+);
+CREATE INDEX IF NOT EXISTS charge_attempt_ws ON charge_attempt(workspace_id, id);
 `;
+
+/** Columns added after the first schema shipped. Applied idempotently on open. */
+const COLUMN_MIGRATIONS: { table: string; column: string; ddl: string }[] = [
+  { table: 'task', column: 'constraint_type', ddl: 'ALTER TABLE task ADD COLUMN constraint_type TEXT' },
+  { table: 'task', column: 'constraint_date', ddl: 'ALTER TABLE task ADD COLUMN constraint_date TEXT' },
+  { table: 'workspace', column: 'plan_version', ddl: 'ALTER TABLE workspace ADD COLUMN plan_version INTEGER NOT NULL DEFAULT 1' },
+];
 
 export function openDb(file = process.env.DATABASE_PATH ?? 'data/batchday.db'): Db {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -67,5 +93,9 @@ export function openDb(file = process.env.DATABASE_PATH ?? 'data/batchday.db'): 
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA);
+  for (const m of COLUMN_MIGRATIONS) {
+    const cols = db.prepare(`PRAGMA table_info(${m.table})`).all() as { name: string }[];
+    if (!cols.some((c) => c.name === m.column)) db.exec(m.ddl);
+  }
   return db;
 }

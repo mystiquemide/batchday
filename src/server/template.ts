@@ -46,7 +46,10 @@ export function buildTemplatePlan(start: string): { tasks: PlanTask[]; dependenc
       ? t.after.map((id) => ends.get(id)!).sort().at(-1)!
       : start;
     ends.set(t.id, addDays(startDate, t.duration));
-    tasks.push({ id: t.id, name: t.name, startDate, duration: t.duration, kind: t.kind, batchNumber: t.batchNumber });
+    tasks.push({
+      id: t.id, name: t.name, startDate, duration: t.duration, kind: t.kind, batchNumber: t.batchNumber,
+      constraintType: null, constraintDate: null,
+    });
     for (const from of t.after) dependencies.push({ id: dependencies.length + 1, fromTask: from, toTask: t.id });
   }
   return { tasks, dependencies };

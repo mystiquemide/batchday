@@ -1,8 +1,10 @@
 import {
   ApiError,
+  CheckoutPaymentIntent,
   Client,
   Environment,
   LogLevel,
+  OrdersController,
   PaypalPaymentTokenCustomerType,
   PaypalPaymentTokenUsageType,
   UsagePattern,
@@ -28,22 +30,31 @@ function requireEnv(name: string): string {
   return value;
 }
 
+let client: Client | null = null;
 let vault: VaultController | null = null;
+let orders: OrdersController | null = null;
 
-function vaultClient(): VaultController {
-  if (vault) return vault;
+function sdkClient(): Client {
+  if (client) return client;
   const env = process.env.PAYPAL_ENV === 'live' ? Environment.Production : Environment.Sandbox;
-  const client = new Client({
+  client = new Client({
     clientCredentialsAuthCredentials: {
       oAuthClientId: requireEnv('PAYPAL_CLIENT_ID'),
       oAuthClientSecret: requireEnv('PAYPAL_CLIENT_SECRET'),
     },
     environment: env,
     timeout: 15_000,
-    logging: { logLevel: LogLevel.Warn, logRequest: { logBody: false }, logResponse: { logBody: false } },
+    logging: { logLevel: LogLevel.Error, logRequest: { logBody: false }, logResponse: { logBody: false } },
   });
-  vault = new VaultController(client);
-  return vault;
+  return client;
+}
+
+function vaultClient(): VaultController {
+  return (vault ??= new VaultController(sdkClient()));
+}
+
+function ordersClient(): OrdersController {
+  return (orders ??= new OrdersController(sdkClient()));
 }
 
 function debugIdOf(headers: Record<string, string> | undefined): string | null {
@@ -69,7 +80,8 @@ async function call<T>(op: string, fn: () => Promise<{ result: T; headers: Recor
       }
       throw new PayPalError(`PayPal ${op} failed with HTTP ${err.statusCode}`, err.statusCode, debugId, issue);
     }
-    throw err;
+    // Network failure or timeout: the request may or may not have reached PayPal.
+    throw new PayPalError(`PayPal ${op} did not return a response`, 0, null, err instanceof Error ? err.name : null);
   }
 }
 
@@ -119,4 +131,59 @@ export async function createPaymentToken(opts: { requestId: string; setupTokenId
     name,
     debugId,
   };
+}
+
+export interface ChargeResult {
+  orderId: string | null;
+  orderStatus: string | null;
+  captureId: string | null;
+  captureStatus: string | null;
+  debugId: string | null;
+}
+
+/**
+ * Merchant-initiated charge on a saved PayPal wallet (Orders v2, intent CAPTURE, vault_id).
+ * requestId is the PayPal-Request-Id: PayPal returns the original order for a repeated id
+ * instead of creating a second one.
+ */
+export async function chargeVault(opts: {
+  requestId: string;
+  vaultId: string;
+  amount: string;
+  currency: 'USD';
+  referenceId: string;
+  description: string;
+}): Promise<ChargeResult> {
+  const { result, debugId } = await call('order create', () =>
+    ordersClient().createOrder({
+      paypalRequestId: opts.requestId,
+      prefer: 'return=representation',
+      body: {
+        intent: CheckoutPaymentIntent.Capture,
+        purchaseUnits: [
+          {
+            referenceId: opts.referenceId,
+            customId: opts.referenceId,
+            description: opts.description,
+            amount: { currencyCode: opts.currency, value: opts.amount },
+          },
+        ],
+        paymentSource: { paypal: { vaultId: opts.vaultId } },
+      },
+    }),
+  );
+  const capture = result.purchaseUnits?.[0]?.payments?.captures?.[0];
+  return {
+    orderId: result.id ?? null,
+    orderStatus: result.status ?? null,
+    captureId: capture?.id ?? null,
+    captureStatus: capture?.status ?? null,
+    debugId,
+  };
+}
+
+export async function getOrderStatus(orderId: string) {
+  const { result, debugId } = await call('order get', () => ordersClient().getOrder({ id: orderId }));
+  const capture = result.purchaseUnits?.[0]?.payments?.captures?.[0];
+  return { orderId: result.id ?? null, status: result.status ?? null, captureId: capture?.id ?? null, captureStatus: capture?.status ?? null, debugId };
 }

@@ -24,6 +24,47 @@ export interface PlanTask {
   duration: number; // days, 0 for milestones
   kind: 'work' | 'ship_batch';
   batchNumber: number | null;
+  constraintType: ConstraintType | null;
+  constraintDate: string | null; // YYYY-MM-DD
+}
+
+/** Bryntum task constraints the plan may carry. Set by Bryntum when a task is dragged or date-edited. */
+export const CONSTRAINT_TYPES = [
+  'startnoearlierthan',
+  'startnolaterthan',
+  'finishnoearlierthan',
+  'finishnolaterthan',
+  'muststarton',
+  'mustfinishon',
+] as const;
+export type ConstraintType = (typeof CONSTRAINT_TYPES)[number];
+
+/** One task's schedule as sent by the console after Bryntum reschedules. */
+export interface TaskScheduleInput {
+  id: number;
+  startDate: string;
+  duration: number;
+  constraintType: ConstraintType | null;
+  constraintDate: string | null;
+}
+
+export type ChargeOutcome = 'PENDING' | 'COMPLETED' | 'DECLINED' | 'FAILED' | 'REVOKED' | 'UNKNOWN' | 'SKIPPED';
+
+export interface ChargeLogRow {
+  id: number;
+  buyerEmail: string | null;
+  batchNumber: number | null;
+  attemptNo: number;
+  amount: string;
+  shipDate: string;
+  outcome: ChargeOutcome;
+  httpStatus: number | null;
+  paypalDebugId: string | null;
+  orderId: string | null;
+  captureId: string | null;
+  detail: string | null;
+  createdAt: string;
+  finishedAt: string | null;
 }
 
 export interface PlanDependency {
