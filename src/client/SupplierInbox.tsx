@@ -121,7 +121,8 @@ export function SupplierInbox({ updates, onApply, onChanged }: Props) {
           )}
           {current.state === 'PROPOSED' && current.impact && (
             <>
-              <h3>If applied</h3>
+              <h3>Estimated if applied</h3>
+              <p className="muted small">Bryntum sets the final dates when you apply.</p>
               <table>
                 <thead><tr><th>Batch</th><th>Ships now</th><th>Ships after</th><th>Charging</th></tr></thead>
                 <tbody>

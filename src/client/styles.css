@@ -68,3 +68,22 @@ details { margin-top: 12px; font-size: 14px; }
 .draft { border: 1px solid #e3e6ea; border-radius: 8px; padding: 12px; margin-top: 12px; }
 .draft pre { white-space: pre-wrap; font: inherit; margin: 8px 0; background: #f6f7f9; padding: 10px; border-radius: 6px; }
 .tag.draft-tag { background: #eef0f2; color: #1b1f24; }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; padding: 8px 16px; font-size: 13px; color: #5b6470; background: #fff; border-bottom: 1px solid #e3e6ea; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { display: inline-block; width: 10px; height: 10px; transform: rotate(45deg); }
+.sw-waiting { background: #8a94a3; }
+.sw-open { background: #1f4fd1; }
+.sw-charged { background: #146c2e; }
+.sw-at-risk { background: #b42318; }
+.sw-empty { background: #fff; border: 2px solid #8a94a3; width: 6px; height: 6px; }
+/* Bryntum draws the milestone diamond with .b-gantt-task-content and its ::before. */
+.b-gantt-task.bd-ship { background: transparent; }
+.bd-ship-waiting .b-gantt-task-content, .bd-ship-waiting .b-gantt-task-content::before { background: #8a94a3; }
+.bd-ship-open .b-gantt-task-content, .bd-ship-open .b-gantt-task-content::before { background: #1f4fd1; }
+.bd-ship-charged .b-gantt-task-content, .bd-ship-charged .b-gantt-task-content::before { background: #146c2e; }
+.bd-ship-at-risk .b-gantt-task-content, .bd-ship-at-risk .b-gantt-task-content::before { background: #b42318; }
+.bd-ship-empty .b-gantt-task-content, .bd-ship-empty .b-gantt-task-content::before { background: #fff; outline: 2px solid #8a94a3; outline-offset: -2px; }
+.b-grid-cell.bd-open { color: #1f4fd1; font-weight: 600; }
+.bd-tip { font-size: 13px; line-height: 1.5; max-width: 280px; }
+.bd-tip-state { margin-top: 4px; font-weight: 600; }
+.bd-tip-rule { margin-top: 4px; color: #5b6470; }

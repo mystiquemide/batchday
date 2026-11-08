@@ -154,6 +154,15 @@ export function Console() {
   }
 
   const link = `${window.location.origin}/r/${data.campaign.workspaceId}`;
+  const buyersByBatch = data.batches.map((b) => {
+    const rs = data.reservations.filter((r) => r.batchNumber === b.number);
+    return {
+      number: b.number,
+      charged: rs.filter((r) => r.state === 'CHARGED').length,
+      waiting: rs.filter((r) => r.state === 'RESERVED' || r.state === 'CHARGING' || r.state === 'CHARGE_FAILED').length,
+      atRisk: rs.filter((r) => r.state === 'AT_RISK').length,
+    };
+  });
   return (
     <main className="console">
       <header className="bar">
@@ -191,8 +200,16 @@ export function Console() {
         )}
       </div>
 
+      <div className="legend" aria-label="Ship milestone colors">
+        <span><i className="sw sw-waiting" /> Outside 20-day window</span>
+        <span><i className="sw sw-open" /> Inside window, charging</span>
+        <span><i className="sw sw-charged" /> Charged</span>
+        <span><i className="sw sw-at-risk" /> Charged, now at risk</span>
+        <span><i className="sw sw-empty" /> No buyers</span>
+      </div>
+
       <section className="gantt" aria-label="Production plan">
-        <PlanGantt ref={gantt} tasks={data.plan.tasks} dependencies={data.plan.dependencies} loadKey={loadKey} onScheduleChange={saveSchedule} />
+        <PlanGantt ref={gantt} buyers={buyersByBatch} tasks={data.plan.tasks} dependencies={data.plan.dependencies} loadKey={loadKey} onScheduleChange={saveSchedule} />
       </section>
 
       <section className="panels">

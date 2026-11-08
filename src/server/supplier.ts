@@ -60,7 +60,12 @@ function normalize(s: string): string {
   return s.replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim();
 }
 
-/** FS forward pass with stored and new SNET constraints, matching how Bryntum schedules this plan. */
+/**
+ * Estimate for the supplier-update preview only: a simple finish-to-start pass so the seller can see
+ * the likely ship-date impact before applying. It never saves a plan. On Apply, the change goes into
+ * the Bryntum Gantt, Bryntum's scheduling engine produces the real dates, and the server only checks
+ * them (plan.ts) before saving.
+ */
 export function schedule(tasks: PlanTask[], deps: PlanDependency[]): Map<number, { startDate: string; duration: number }> {
   const out = new Map<number, { startDate: string; duration: number }>();
   const pending = [...tasks];
@@ -144,7 +149,7 @@ export function validateChanges(raw: unknown, text: string, tasks: PlanTask[], t
   return { proposals, dropped };
 }
 
-/** Ship dates and charge consequences if the proposals were applied, for the seller's preview. */
+/** Preview estimate of ship dates and charge consequences if the proposals were applied. Bryntum computes the dates on Apply. */
 export function previewImpact(db: Db, workspaceId: string, proposals: ProposedChange[], now: Date) {
   const plan = getPlan(db, workspaceId);
   const tasks = plan.tasks.map((t) => {

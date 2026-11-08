@@ -41,7 +41,8 @@ function parseTasks(input: unknown): TaskScheduleInput[] {
 }
 
 /**
- * FR-004: validates a full schedule from the console against the stored plan and saves it.
+ * FR-004: checks the schedule Bryntum produced in the console against the stored plan and saves it.
+ * The server does not reschedule; it rejects any schedule that breaks a dependency.
  * Task names, kinds, batches and dependencies are server-owned; only dates, durations
  * and constraints are accepted from the client.
  */

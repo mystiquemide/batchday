@@ -18,7 +18,8 @@ Batchday is not a deposit system, an escrow, or a reminder to charge people late
 
 The buyer saves their PayPal wallet without paying.
 The seller's plan is a Bryntum Gantt: sourcing, factory, QC, freight, and one ship milestone per batch, linked by dependencies.
-When a task moves, Bryntum reschedules everything after it and the server recomputes each batch's ship date.
+When a task moves, Bryntum's scheduling engine reschedules everything after it. The server checks Bryntum's dates against the dependencies and saves them; it does not reschedule.
+Each ship milestone in the Gantt shows its window state: ship date, the day charging opens, and buyers charged or waiting, colored by state.
 Any batch now within 20 days of shipping charges its buyers through PayPal, once each.
 
 | Operation | Result |
