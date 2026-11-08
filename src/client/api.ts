@@ -1,4 +1,4 @@
-import type { BatchSummary, CampaignView, ChargeLogRow, PlanDependency, PlanTask, ReservationView, TaskScheduleInput } from '../shared/types';
+import type { BatchImpact, SupplierUpdateView, BatchSummary, CampaignView, ChargeLogRow, PlanDependency, PlanTask, ReservationView, TaskScheduleInput } from '../shared/types';
 
 export class ApiFailure extends Error {
   constructor(message: string, readonly status: number, readonly debugId: string | null, readonly problems: string[] = []) {
@@ -27,8 +27,11 @@ export interface EngineSummary {
   outsideWindow: number;
 }
 
+export type UpdateWithImpact = SupplierUpdateView & { impact?: BatchImpact[] | null };
+
 export interface WorkspaceData {
   campaign: CampaignView;
+  updates: UpdateWithImpact[];
   planVersion: number;
   charges: ChargeLogRow[];
   engine?: EngineSummary;
@@ -56,6 +59,9 @@ export const api = {
   getWorkspace: () => request<WorkspaceData>('GET', '/api/workspace'),
   startWorkspace: () => request<{ workspaceId: string }>('POST', '/api/workspace'),
   savePlan: (planVersion: number, tasks: TaskScheduleInput[]) => request<WorkspaceData>('PUT', '/api/workspace/plan', { planVersion, tasks }),
+  submitUpdate: (text: string) => request<{ update: UpdateWithImpact }>('POST', '/api/workspace/updates', { text }),
+  applyUpdate: (id: string) => request<{ update: SupplierUpdateView }>('POST', `/api/workspace/updates/${id}/apply`, {}),
+  discardUpdate: (id: string) => request<{ update: SupplierUpdateView }>('POST', `/api/workspace/updates/${id}/discard`, {}),
   getCampaign: (id: string) => request<PublicCampaign>('GET', `/api/public/campaign/${id}`),
   reserve: (id: string) => request<{ approveUrl: string; statusPath: string }>('POST', `/api/public/campaign/${id}/reserve`),
   getReservation: (token: string) => request<PublicReservation>('GET', `/api/public/reservation/${token}`),

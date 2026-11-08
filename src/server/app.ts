@@ -3,6 +3,7 @@ import type { Db } from './db.js';
 import { PayPalError, chargeVault, createPaymentToken, createSetupToken, deletePaymentToken } from './paypal.js';
 import { chargeLog, runEngine, type EngineSummary } from './engine.js';
 import { PlanRejected, getPlanVersion, savePlan } from './plan.js';
+import { UpdateRejected, geminiParser, getUpdate, listUpdates, previewImpact, resolveUpdate, submitUpdate } from './supplier.js';
 import {
   abandon,
   attachSetupToken,
@@ -52,6 +53,7 @@ export interface AppDeps {
     deletePaymentToken: typeof deletePaymentToken;
   };
   now?: () => Date;
+  parseSupplierText?: typeof geminiParser;
 }
 
 export function createApp({
@@ -59,6 +61,7 @@ export function createApp({
   publicBaseUrl,
   paypal = { createSetupToken, createPaymentToken, chargeVault, deletePaymentToken },
   now = () => new Date(),
+  parseSupplierText = geminiParser,
 }: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
@@ -98,6 +101,7 @@ export function createApp({
     batches,
     reservations: listReservations(db, id).map((r) => toView(r, false, batches)),
     charges: chargeLog(db, id),
+    updates: listUpdates(db, id).map((u) => (u.state === 'PROPOSED' ? { ...u, impact: previewImpact(db, id, u.proposals, now()) } : u)),
     windowDays: WINDOW_DAYS,
     ...(engine ? { engine } : {}),
     };
@@ -123,6 +127,37 @@ export function createApp({
     const engine = await runEngine({ db, paypal, now }, id);
     res.json(workspaceView(id, engine));
   });
+
+  // ---- Supplier updates (Slice 4). The model only proposes; the seller applies through the plan save path. ----
+
+  app.post('/api/workspace/updates', async (req, res) => {
+    const id = sellerWorkspace(req, res);
+    if (!id) return;
+    if (!req.is('application/json')) return res.status(415).json({ error: 'JSON required.' });
+    try {
+      const update = await submitUpdate(db, id, req.body?.text, now(), parseSupplierText);
+      const impact = update.state === 'PROPOSED' ? previewImpact(db, id, update.proposals, now()) : null;
+      res.status(201).json({ update: { ...update, impact } });
+    } catch (err) {
+      if (err instanceof UpdateRejected) return res.status(err.status).json({ error: err.message });
+      throw err;
+    }
+  });
+
+  for (const [action, state] of [['apply', 'APPLIED'], ['discard', 'DISCARDED']] as const) {
+    app.post(`/api/workspace/updates/:updateId/${action}`, (req, res) => {
+      const id = sellerWorkspace(req, res);
+      if (!id) return;
+      const updateId = req.params.updateId;
+      if (!HEX32.test(updateId) || !getUpdate(db, id, updateId)) return res.status(404).json({ error: 'Update not found.' });
+      try {
+        res.json({ update: resolveUpdate(db, id, updateId, state) });
+      } catch (err) {
+        if (err instanceof UpdateRejected) return res.status(err.status).json({ error: err.message });
+        throw err;
+      }
+    });
+  }
 
   // ---- Buyer pages ----
 

@@ -1,4 +1,8 @@
 import express from 'express';
+import fs from 'node:fs';
+
+// Local secrets live in a git-ignored .env; hosted deployments set real environment variables.
+if (fs.existsSync('.env')) process.loadEnvFile('.env');
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp } from './app.js';

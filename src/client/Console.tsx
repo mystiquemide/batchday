@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { TaskScheduleInput } from '../shared/types';
-import { ApiFailure, api, formatDate, type EngineSummary, type WorkspaceData } from './api';
+import { ApiFailure, api, formatDate, type EngineSummary, type UpdateWithImpact, type WorkspaceData } from './api';
 import { ChargeLog } from './ChargeLog';
-import { PlanGantt } from './PlanGantt';
+import { PlanGantt, type PlanGanttHandle } from './PlanGantt';
+import { SupplierInbox } from './SupplierInbox';
 import { StateBadge } from './StateBadge';
 
 type SaveState =
@@ -32,6 +33,9 @@ export function Console() {
   const [save, setSave] = useState<SaveState>({ kind: 'idle' });
   const version = useRef(0);
   const queue = useRef<Promise<void>>(Promise.resolve());
+  const gantt = useRef<PlanGanttHandle>(null);
+  /** Supplier update being applied; marked APPLIED only once its plan save is accepted. */
+  const applying = useRef<{ id: string; settle: (ok: boolean, message?: string) => void } | null>(null);
 
   async function load() {
     try {
@@ -83,12 +87,38 @@ export function Console() {
         version.current = next.planVersion;
         setData(next);
         setSave({ kind: 'saved', engine: next.engine });
+        applying.current?.settle(true);
       } catch (err) {
         const f = err instanceof ApiFailure ? err : null;
         setSave({ kind: 'rejected', message: f?.message ?? 'Could not save the plan.', problems: f?.problems ?? [] });
+        applying.current?.settle(false, f?.message);
         await load(); // put the chart back on the last accepted plan
       }
     });
+  }
+
+  // AC-4.3: a supplier proposal goes through Bryntum and the same save and charge path as a manual edit.
+  async function applyUpdate(u: UpdateWithImpact) {
+    if (!gantt.current) throw new Error('The plan is not loaded yet.');
+    const saved = new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        applying.current = null;
+        reject(new Error('The plan did not change, so nothing was applied.'));
+      }, 15_000);
+      applying.current = {
+        id: u.id,
+        settle: (ok, message) => {
+          clearTimeout(timer);
+          applying.current = null;
+          if (ok) resolve();
+          else reject(new Error(message ?? 'The plan change was rejected.'));
+        },
+      };
+    });
+    await gantt.current.apply(u.proposals);
+    await saved;
+    await api.applyUpdate(u.id);
+    await refresh();
   }
 
   if (status === 'loading') return <main className="page"><p role="status">Loading workspace...</p></main>;
@@ -142,7 +172,7 @@ export function Console() {
       </div>
 
       <section className="gantt" aria-label="Production plan">
-        <PlanGantt tasks={data.plan.tasks} dependencies={data.plan.dependencies} loadKey={loadKey} onScheduleChange={saveSchedule} />
+        <PlanGantt ref={gantt} tasks={data.plan.tasks} dependencies={data.plan.dependencies} loadKey={loadKey} onScheduleChange={saveSchedule} />
       </section>
 
       <section className="panels">
@@ -191,6 +221,10 @@ export function Console() {
           )}
           <button className="secondary" onClick={refresh}>Refresh</button>
         </div>
+      </section>
+
+      <section className="panels single">
+        <SupplierInbox updates={data.updates} onApply={applyUpdate} onChanged={refresh} />
       </section>
 
       <section className="panels single">

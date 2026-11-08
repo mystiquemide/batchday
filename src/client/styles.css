@@ -47,3 +47,18 @@ th { color: #5b6470; font-weight: 500; }
 .cancel { margin-top: 20px; }
 .cancel .row { gap: 8px; }
 button.danger { background: #b42318; border-color: #b42318; color: #fff; font-weight: 600; }
+.panel h3 { font-size: 14px; margin: 16px 0 8px; }
+.panel form label { display: block; font-size: 13px; color: #5b6470; margin-bottom: 6px; }
+textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 8px; border: 1px solid #c4c9d0; border-radius: 6px; margin-bottom: 8px; }
+textarea:focus-visible { outline: 3px solid #2f6feb; outline-offset: 2px; }
+.row { align-items: center; }
+.update { margin-top: 16px; border-top: 1px solid #eef0f2; padding-top: 12px; }
+.raw { margin: 8px 0; padding: 8px 12px; background: #f6f7f9; border-left: 3px solid #c4c9d0; white-space: pre-wrap; }
+.proposals, .dropped, .history { padding-left: 18px; margin: 0; }
+.proposals li, .dropped li { margin-bottom: 8px; }
+.quote { display: block; font-style: normal; color: #1f4fd1; font-size: 13px; margin-top: 2px; }
+tr.changed td { background: #f0f6ff; }
+.u-proposed { background: #e6f0ff; color: #1f4fd1; }
+.u-applied { background: #e3f7e9; color: #146c2e; }
+.u-rejected_invalid, .u-discarded { background: #f2f2f2; color: #5b6470; }
+details { margin-top: 12px; font-size: 14px; }

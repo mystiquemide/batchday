@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { BryntumGantt } from '@bryntum/gantt-react-community';
-import type { PlanDependency, PlanTask, TaskScheduleInput } from '../shared/types';
+import type { PlanDependency, PlanTask, ProposedChange, TaskScheduleInput } from '../shared/types';
 
 const DAY_MS = 86_400_000;
 
@@ -18,12 +18,45 @@ interface Props {
   onScheduleChange: (tasks: TaskScheduleInput[]) => void;
 }
 
+export interface PlanGanttHandle {
+  /** Applies proposals to the chart; Bryntum reschedules successors and the normal save follows. */
+  apply(changes: ProposedChange[]): Promise<void>;
+}
+
+function localDate(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 /**
  * The production plan. Bryntum's engine reschedules successors when a task moves;
  * once it settles, the full schedule is handed to onScheduleChange for the server to validate.
  */
-export function PlanGantt({ tasks, dependencies, loadKey, onScheduleChange }: Props) {
+export const PlanGantt = forwardRef<PlanGanttHandle, Props>(function PlanGantt(
+  { tasks, dependencies, loadKey, onScheduleChange },
+  handle,
+) {
   const ref = useRef<BryntumGantt>(null);
+
+  useImperativeHandle(handle, () => ({
+    async apply(changes) {
+      const gantt = ref.current?.instance;
+      if (!gantt) throw new Error('The plan is not loaded yet.');
+      for (const c of changes) {
+        const task: any = gantt.taskStore.getById(c.taskId);
+        if (!task) continue;
+        const fields: Record<string, unknown> = {};
+        if (c.after.startDate !== c.before.startDate) {
+          // Same constraint Bryntum sets when a task is dragged, so the date survives rescheduling and reload.
+          Object.assign(fields, { constraintType: 'startnoearlierthan', constraintDate: localDate(c.after.startDate) });
+        }
+        if (c.after.duration !== c.before.duration) Object.assign(fields, { duration: c.after.duration, durationUnit: 'day' });
+        task.set(fields);
+      }
+      const project: any = gantt.project;
+      if (typeof project.commitAsync === 'function') await project.commitAsync();
+    },
+  }));
   const onChange = useRef(onScheduleChange);
   onChange.current = onScheduleChange;
 
@@ -89,4 +122,4 @@ export function PlanGantt({ tasks, dependencies, loadKey, onScheduleChange }: Pr
       dependenciesFeature={{ allowCreate: false }}
     />
   );
-}
+});

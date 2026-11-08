@@ -78,6 +78,19 @@ CREATE TABLE IF NOT EXISTS charge_attempt (
   UNIQUE (reservation_id, attempt_no)
 );
 CREATE INDEX IF NOT EXISTS charge_attempt_ws ON charge_attempt(workspace_id, id);
+CREATE TABLE IF NOT EXISTS supplier_update (
+  id TEXT PRIMARY KEY,
+  workspace_id TEXT NOT NULL REFERENCES workspace(id),
+  raw_text TEXT NOT NULL,
+  state TEXT NOT NULL CHECK (state IN ('RECEIVED','PROPOSED','APPLIED','DISCARDED','REJECTED_INVALID')),
+  proposals TEXT,
+  dropped TEXT,
+  no_change_reason TEXT,
+  error TEXT,
+  model_id TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS supplier_update_ws ON supplier_update(workspace_id, created_at);
 `;
 
 /** Columns added after the first schema shipped. Applied idempotently on open. */

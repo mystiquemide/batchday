@@ -113,3 +113,43 @@ export interface CampaignView {
   currency: 'USD';
   isTemplate: boolean;
 }
+
+export type SupplierUpdateState = 'RECEIVED' | 'PROPOSED' | 'APPLIED' | 'DISCARDED' | 'REJECTED_INVALID';
+
+export interface ProposedChange {
+  taskId: number;
+  taskName: string;
+  changeType: 'delay_days' | 'new_start_date' | 'new_end_date' | 'completed';
+  quote: string;
+  summary: string;
+  before: { startDate: string; duration: number };
+  after: { startDate: string; duration: number };
+}
+
+export interface DroppedChange {
+  taskId: number | null;
+  quote: string;
+  reason: string;
+}
+
+export interface SupplierUpdateView {
+  id: string;
+  rawText: string;
+  state: SupplierUpdateState;
+  proposals: ProposedChange[];
+  dropped: DroppedChange[];
+  noChangeReason: string | null;
+  error: string | null;
+  modelId: string | null;
+  createdAt: string;
+}
+
+export interface BatchImpact {
+  number: number;
+  shipBefore: string;
+  shipAfter: string;
+  windowOpenAfter: string;
+  inWindowBefore: boolean;
+  inWindowAfter: boolean;
+  reserved: number;
+}
