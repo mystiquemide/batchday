@@ -1,17 +1,12 @@
-import { BryntumGantt } from '@bryntum/gantt-react-community';
-
-const project = {
-  startDate: '2026-11-09',
-  tasks: [{ id: 1, name: 'Factory run, batch 1', startDate: '2026-11-09', duration: 5 }],
-};
+import { Console } from './Console';
+import { Reserve } from './Reserve';
+import { Status } from './Status';
 
 export function App() {
-  return (
-    <main style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <h1 style={{ margin: '12px 16px', font: '600 20px system-ui' }}>Batchday</h1>
-      <div style={{ flex: 1 }}>
-        <BryntumGantt project={project} columns={[{ type: 'name', width: 240 }]} />
-      </div>
-    </main>
-  );
+  const path = window.location.pathname;
+  const reserve = path.match(/^\/r\/([0-9a-f]{32})$/);
+  if (reserve) return <Reserve workspaceId={reserve[1]} />;
+  const status = path.match(/^\/s\/([0-9a-f]{32})$/);
+  if (status) return <Status publicToken={status[1]} />;
+  return <Console />;
 }

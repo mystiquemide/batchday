@@ -7,3 +7,4 @@ dist/
 *.sqlite
 memory.md
 .DS_Store
+data/

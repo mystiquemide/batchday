@@ -1,0 +1,38 @@
+:root { font-family: system-ui, -apple-system, Segoe UI, sans-serif; color: #1b1f24; background: #f6f7f9; }
+body { margin: 0; }
+h1 { font-size: 22px; margin: 0 0 4px; }
+h2 { font-size: 16px; margin: 0 0 12px; }
+button { font: inherit; padding: 8px 14px; border-radius: 6px; border: 1px solid #c4c9d0; background: #fff; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid #2f6feb; outline-offset: 2px; }
+button.primary { background: #1f4fd1; border-color: #1f4fd1; color: #fff; font-weight: 600; }
+button.primary:disabled { opacity: 0.6; cursor: default; }
+button.secondary { margin-top: 12px; }
+.page { padding: 32px 16px; }
+.narrow { max-width: 520px; margin: 0 auto; }
+.muted { color: #5b6470; }
+.small { font-size: 12px; }
+.error { color: #b42318; }
+.notice { background: #fff8e6; border: 1px solid #f0d58c; padding: 10px 12px; border-radius: 6px; }
+.rule { background: #eef3ff; padding: 10px 12px; border-radius: 6px; }
+.price { font-size: 20px; font-weight: 600; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.facts dt { color: #5b6470; }
+.facts dd { margin: 0; font-weight: 500; }
+.tag { margin-left: 10px; font-size: 12px; background: #fff3d6; color: #7a5300; padding: 2px 8px; border-radius: 10px; }
+.console { display: flex; flex-direction: column; min-height: 100vh; }
+.bar { display: flex; justify-content: space-between; gap: 24px; padding: 16px; background: #fff; border-bottom: 1px solid #e3e6ea; }
+.bar p { margin: 0; }
+.link label { display: block; font-size: 12px; color: #5b6470; margin-bottom: 4px; }
+.row { display: flex; gap: 8px; }
+.row input { width: 380px; padding: 7px 8px; border: 1px solid #c4c9d0; border-radius: 6px; font: inherit; }
+.gantt { height: 640px; border-bottom: 1px solid #e3e6ea; }
+.panels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; }
+.panel { background: #fff; border: 1px solid #e3e6ea; border-radius: 8px; padding: 16px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eef0f2; vertical-align: top; }
+th { color: #5b6470; font-weight: 500; }
+.badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #eef0f2; }
+.s-reserved { background: #e6f0ff; color: #1f4fd1; }
+.s-charged { background: #e3f7e9; color: #146c2e; }
+.s-abandoned, .s-cancelled, .s-revoked { background: #f2f2f2; color: #5b6470; }
+.s-charge_failed, .s-at_risk { background: #fdecea; color: #b42318; }

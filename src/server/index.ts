@@ -1,16 +1,14 @@
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createApp } from './app.js';
+import { openDb } from './db.js';
 
-const app = express();
 const port = Number(process.env.PORT ?? 3000);
+const publicBaseUrl = (process.env.PUBLIC_BASE_URL ?? `http://localhost:${port}`).replace(/\/$/, '');
 const distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../dist');
 
-app.use(express.json({ limit: '100kb' }));
-
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok' });
-});
+const app = createApp({ db: openDb(), publicBaseUrl });
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(distDir));
@@ -18,5 +16,5 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.listen(port, () => {
-  console.log(`Batchday listening on http://localhost:${port}`);
+  console.log(`Batchday listening on ${publicBaseUrl}`);
 });
