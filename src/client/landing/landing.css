@@ -358,3 +358,11 @@
   .lp-fit-col { padding: 28px 0 0; }
   .lp-fit-col + .lp-fit-col { padding: 28px 0 0; margin-top: 32px; border-left: 0; border-top: 1px solid var(--lp-hairline); }
 }
+
+/* [7] Final call to action */
+.lp-bg-dark { background: var(--lp-dark); }
+.lp .lp-on-dark { color: var(--lp-on-dark); }
+.lp .lp-on-dark-2 { color: #b4b9c2; }
+.lp .lp-textlink-dark { color: var(--lp-on-dark); }
+.lp-bg-dark :focus-visible { outline-color: #8fb0ff; }
+.lp-dark-note { margin: 24px 0 0; font-size: 14px; line-height: 1.5; color: #8b8f99; }

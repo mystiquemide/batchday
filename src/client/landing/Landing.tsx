@@ -1,5 +1,6 @@
 import '@fontsource-variable/inter';
 import './landing.css';
+import { FinalCta } from './FinalCta';
 import { Fit } from './Fit';
 import { Hero } from './Hero';
 import { HowItWorks } from './HowItWorks';
@@ -19,6 +20,7 @@ export function Landing() {
         <Refusals />
         <Proof />
         <Fit />
+        <FinalCta />
       </main>
     </div>
   );
