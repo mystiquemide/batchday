@@ -3,6 +3,7 @@ import './landing.css';
 import { Hero } from './Hero';
 import { HowItWorks } from './HowItWorks';
 import { Nav } from './Nav';
+import { Proof } from './Proof';
 import { Refusals } from './Refusals';
 import { Rule } from './Rule';
 
@@ -15,6 +16,7 @@ export function Landing() {
         <Rule />
         <HowItWorks />
         <Refusals />
+        <Proof />
       </main>
     </div>
   );
