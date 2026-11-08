@@ -4,6 +4,7 @@ import { ApiFailure, api, formatDate, type EngineSummary, type UpdateWithImpact,
 import { ChargeLog } from './ChargeLog';
 import { PlanGantt, type PlanGanttHandle } from './PlanGantt';
 import { SupplierInbox } from './SupplierInbox';
+import { Notices } from './Notices';
 import { StateBadge } from './StateBadge';
 
 type SaveState =
@@ -20,6 +21,8 @@ function engineText(e: EngineSummary | undefined): string {
     e.revoked && `${e.revoked} revoked at PayPal`,
     e.unknown && `${e.unknown} awaiting PayPal`,
     e.outsideWindow && `${e.outsideWindow} outside the 20-day window`,
+    e.atRisk && `${e.atRisk} charged buyer${e.atRisk === 1 ? ' is' : 's are'} now at risk`,
+    e.recovered && `${e.recovered} back within the promise`,
   ].filter(Boolean);
   return `Plan saved. ${parts.length ? parts.join(', ') + '.' : 'No reservations to charge.'}`;
 }
@@ -31,6 +34,23 @@ export function Console() {
   const [copied, setCopied] = useState(false);
   const [loadKey, setLoadKey] = useState(0);
   const [save, setSave] = useState<SaveState>({ kind: 'idle' });
+  const [refunding, setRefunding] = useState<string | null>(null);
+  const [refundError, setRefundError] = useState<string | null>(null);
+
+  async function refund(reservationId: string) {
+    setRefunding(reservationId);
+    setRefundError(null);
+    try {
+      const next = await api.refund(reservationId);
+      version.current = next.planVersion;
+      setData(next);
+    } catch (err) {
+      const f = err instanceof ApiFailure ? err : null;
+      setRefundError(`${f?.message ?? 'Refund failed.'}${f?.debugId ? ` PayPal debug ID ${f.debugId}.` : ''}`);
+    } finally {
+      setRefunding(null);
+    }
+  }
   const version = useRef(0);
   const queue = useRef<Promise<void>>(Promise.resolve());
   const gantt = useRef<PlanGanttHandle>(null);
@@ -212,19 +232,34 @@ export function Console() {
                     <td>
                       {r.chargedAt ? new Date(r.chargedAt).toLocaleString() : r.refusal ? `Opens ${formatDate(r.refusal.windowOpenDate)}` : '-'}
                       {r.refusal && <div className="muted small">{r.refusal.reason}</div>}
-                      {r.message && <div className="muted small">{r.message}</div>}
+                      {r.message && <div className={r.state === 'AT_RISK' ? 'error small' : 'muted small'}>{r.message}</div>}
+                      {r.refundId && <div className="muted small mono">Refund {r.refundId}</div>}
+                      {r.canRefund && r.id && (
+                        <button
+                          className={r.state === 'AT_RISK' ? 'danger small-btn' : 'small-btn'}
+                          onClick={() => refund(r.id!)}
+                          disabled={refunding !== null}
+                        >
+                          {refunding === r.id ? 'Refunding...' : 'Refund'}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
+          {refundError && <p role="alert" className="error">{refundError}</p>}
           <button className="secondary" onClick={refresh}>Refresh</button>
         </div>
       </section>
 
       <section className="panels single">
         <SupplierInbox updates={data.updates} onApply={applyUpdate} onChanged={refresh} />
+      </section>
+
+      <section className="panels single">
+        <Notices />
       </section>
 
       <section className="panels single">

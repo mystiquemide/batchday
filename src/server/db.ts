@@ -99,6 +99,10 @@ const COLUMN_MIGRATIONS: { table: string; column: string; ddl: string }[] = [
   { table: 'task', column: 'constraint_date', ddl: 'ALTER TABLE task ADD COLUMN constraint_date TEXT' },
   { table: 'reservation', column: 'token_deleted_at', ddl: 'ALTER TABLE reservation ADD COLUMN token_deleted_at TEXT' },
   { table: 'reservation', column: 'token_delete_debug_id', ddl: 'ALTER TABLE reservation ADD COLUMN token_delete_debug_id TEXT' },
+  { table: 'reservation', column: 'refund_status', ddl: 'ALTER TABLE reservation ADD COLUMN refund_status TEXT' },
+  { table: 'reservation', column: 'refunded_at', ddl: 'ALTER TABLE reservation ADD COLUMN refunded_at TEXT' },
+  { table: 'reservation', column: 'refund_debug_id', ddl: 'ALTER TABLE reservation ADD COLUMN refund_debug_id TEXT' },
+  { table: 'reservation', column: 'notified_ship_date', ddl: 'ALTER TABLE reservation ADD COLUMN notified_ship_date TEXT' },
   { table: 'workspace', column: 'plan_version', ddl: 'ALTER TABLE workspace ADD COLUMN plan_version INTEGER NOT NULL DEFAULT 1' },
 ];
 

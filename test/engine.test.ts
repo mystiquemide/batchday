@@ -84,8 +84,8 @@ describe('BR-001 window invariant', () => {
   it('re-checks the window immediately before calling PayPal and skips if it closed', async () => {
     const a = reserve(1);
     let calls = 0;
-    // Candidate scan and claim read the clock inside the window; the pre-call re-check sees it outside.
-    const clock = () => (calls++ < 2 ? INSIDE_B1 : OUTSIDE);
+    // Risk check, candidate scan, and claim read the clock inside the window; the pre-call re-check sees it outside.
+    const clock = () => (calls++ < 3 ? INSIDE_B1 : OUTSIDE);
     const s = await run(clock);
     expect(chargeVault).not.toHaveBeenCalled();
     expect(s.skipped).toBe(1);

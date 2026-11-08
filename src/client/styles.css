@@ -62,3 +62,9 @@ tr.changed td { background: #f0f6ff; }
 .u-applied { background: #e3f7e9; color: #146c2e; }
 .u-rejected_invalid, .u-discarded { background: #f2f2f2; color: #5b6470; }
 details { margin-top: 12px; font-size: 14px; }
+.small-btn { margin-top: 6px; padding: 4px 10px; font-size: 13px; }
+.s-at_risk { background: #fdecea; color: #b42318; }
+.s-refunded { background: #f2f2f2; color: #5b6470; }
+.draft { border: 1px solid #e3e6ea; border-radius: 8px; padding: 12px; margin-top: 12px; }
+.draft pre { white-space: pre-wrap; font: inherit; margin: 8px 0; background: #f6f7f9; padding: 10px; border-radius: 6px; }
+.tag.draft-tag { background: #eef0f2; color: #1b1f24; }

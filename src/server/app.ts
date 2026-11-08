@@ -1,6 +1,8 @@
 import express, { type Request, type Response } from 'express';
 import type { Db } from './db.js';
-import { PayPalError, chargeVault, createPaymentToken, createSetupToken, deletePaymentToken } from './paypal.js';
+import { PayPalError, chargeVault, createPaymentToken, createSetupToken, deletePaymentToken, refundCapture } from './paypal.js';
+import { RefundRejected, evaluateRisk, refundReservation } from './risk.js';
+import { type Drafter, draftNotices, geminiDrafter, markNotified } from './notices.js';
 import { chargeLog, runEngine, type EngineSummary } from './engine.js';
 import { PlanRejected, getPlanVersion, savePlan } from './plan.js';
 import { UpdateRejected, geminiParser, getUpdate, listUpdates, previewImpact, resolveUpdate, submitUpdate } from './supplier.js';
@@ -51,17 +53,20 @@ export interface AppDeps {
     createPaymentToken: typeof createPaymentToken;
     chargeVault: typeof chargeVault;
     deletePaymentToken: typeof deletePaymentToken;
+    refundCapture: typeof refundCapture;
   };
   now?: () => Date;
   parseSupplierText?: typeof geminiParser;
+  draftNotice?: Drafter;
 }
 
 export function createApp({
   db,
   publicBaseUrl,
-  paypal = { createSetupToken, createPaymentToken, chargeVault, deletePaymentToken },
+  paypal = { createSetupToken, createPaymentToken, chargeVault, deletePaymentToken, refundCapture },
   now = () => new Date(),
   parseSupplierText = geminiParser,
+  draftNotice = geminiDrafter,
 }: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
@@ -99,7 +104,7 @@ export function createApp({
     planVersion: getPlanVersion(db, id),
     plan: getPlan(db, id),
     batches,
-    reservations: listReservations(db, id).map((r) => toView(r, false, batches)),
+    reservations: listReservations(db, id).map((r) => toView(r, false, batches, true)),
     charges: chargeLog(db, id),
     updates: listUpdates(db, id).map((u) => (u.state === 'PROPOSED' ? { ...u, impact: previewImpact(db, id, u.proposals, now()) } : u)),
     windowDays: WINDOW_DAYS,
@@ -110,7 +115,39 @@ export function createApp({
   app.get('/api/workspace', (req, res) => {
     const id = sellerWorkspace(req, res);
     if (!id) return;
+    evaluateRisk(db, id, now()); // keep AT_RISK current even between engine runs
     res.json(workspaceView(id));
+  });
+
+  // FR-019: seller refunds a charged reservation in full.
+  app.post('/api/workspace/reservations/:reservationId/refund', async (req, res) => {
+    const id = sellerWorkspace(req, res);
+    if (!id) return;
+    const rid = req.params.reservationId;
+    if (!HEX32.test(rid)) return res.status(404).json({ error: 'Reservation not found.' });
+    try {
+      await refundReservation(db, id, rid, { refundCapture: paypal.refundCapture, now });
+      res.json(workspaceView(id));
+    } catch (err) {
+      if (err instanceof RefundRejected) return res.status(err.status).json({ error: err.message, debugId: err.debugId });
+      throw err;
+    }
+  });
+
+  // FR-020: drafts for buyers affected by plan changes. Never sent by Batchday.
+  app.post('/api/workspace/notices/draft', async (req, res) => {
+    const id = sellerWorkspace(req, res);
+    if (!id) return;
+    evaluateRisk(db, id, now());
+    res.json({ drafts: await draftNotices(db, id, now(), draftNotice) });
+  });
+
+  app.post('/api/workspace/notices/mark-notified', (req, res) => {
+    const id = sellerWorkspace(req, res);
+    if (!id) return;
+    const batch = req.body?.batchNumber;
+    if (!Number.isInteger(batch)) return res.status(422).json({ error: 'batchNumber is required.' });
+    res.json({ updated: markNotified(db, id, batch, now()) });
   });
 
   // FR-003, FR-004, FR-008: save the rescheduled plan, then run the charge engine on it.

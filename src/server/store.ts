@@ -35,6 +35,10 @@ export interface ReservationRow {
   refund_id: string | null;
   token_deleted_at?: string | null;
   token_delete_debug_id?: string | null;
+  refund_status?: string | null;
+  refunded_at?: string | null;
+  refund_debug_id?: string | null;
+  notified_ship_date?: string | null;
 }
 
 const capacityStates = CAPACITY_STATES.map((s) => `'${s}'`).join(',');
@@ -202,14 +206,15 @@ export function confirmReservation(
     if (!batch) return 'sold_out' as const;
     db.prepare(
       `UPDATE reservation SET state = 'RESERVED', batch_number = ?, vault_id = ?, paypal_customer_id = ?,
-              buyer_email = ?, buyer_name = ?, message = NULL
+              buyer_email = ?, buyer_name = ?, message = NULL, notified_ship_date = ?
         WHERE id = ? AND state = 'PENDING_APPROVAL'`,
-    ).run(batch.number, token.vaultId, token.customerId, token.email, token.name, reservationId);
+    ).run(batch.number, token.vaultId, token.customerId, token.email, token.name, batch.shipDate, reservationId);
     return 'reserved' as const;
   }).immediate();
 }
 
 const CANCELLABLE: ReservationState[] = ['RESERVED', 'CHARGE_FAILED'];
+export const REFUNDABLE: ReservationState[] = ['CHARGED', 'AT_RISK'];
 
 function displayDate(iso: string): string {
   return new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
@@ -230,8 +235,9 @@ export function refusalFor(r: Pick<ReservationRow, 'state' | 'batch_number'>, ba
 }
 
 /** NFR-001: the only reservation shape that leaves the server. Never includes vault_id. */
-export function toView(r: ReservationRow, includePublicToken: boolean, batches: BatchSummary[]): ReservationView {
+export function toView(r: ReservationRow, includePublicToken: boolean, batches: BatchSummary[], seller = false): ReservationView {
   return {
+    ...(seller ? { id: r.id } : {}),
     ...(includePublicToken ? { publicToken: r.public_token } : {}),
     state: r.state,
     batchNumber: r.batch_number,
@@ -243,6 +249,10 @@ export function toView(r: ReservationRow, includePublicToken: boolean, batches: 
     message: r.message,
     refusal: refusalFor(r, batches),
     canCancel: CANCELLABLE.includes(r.state),
+    refundId: r.refund_id,
+    refundStatus: r.refund_status ?? null,
+    refundedAt: r.refunded_at ?? null,
+    canRefund: seller && REFUNDABLE.includes(r.state) && Boolean(r.capture_id),
   };
 }
 

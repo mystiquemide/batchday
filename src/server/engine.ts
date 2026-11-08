@@ -2,6 +2,7 @@ import type { ChargeLogRow, ChargeOutcome, ReservationState } from '../shared/ty
 import type { Db } from './db.js';
 import { PayPalError, type ChargeResult, chargeVault, deletePaymentToken } from './paypal.js';
 import { getBatches, getCampaign, markTokenDeleted, pendingTokenDeletes } from './store.js';
+import { evaluateRisk } from './risk.js';
 
 /** CHARGE_FAILED gets one automatic retry (state model), so at most two failed attempts. */
 const MAX_FAILED_ATTEMPTS = 2;
@@ -22,6 +23,8 @@ export interface EngineSummary {
   unknown: number;
   skipped: number;
   outsideWindow: number;
+  atRisk: number;
+  recovered: number;
 }
 
 interface Candidate {
@@ -186,8 +189,9 @@ async function chargeOne(deps: Required<EngineDeps>, workspaceId: string, c: Can
 }
 
 async function runWorkspace(deps: Required<EngineDeps>, workspaceId: string): Promise<EngineSummary> {
-  const summary: EngineSummary = { charged: 0, failed: 0, revoked: 0, unknown: 0, skipped: 0, outsideWindow: 0 };
   const { db } = deps;
+  const risk = evaluateRisk(db, workspaceId, deps.now());
+  const summary: EngineSummary = { charged: 0, failed: 0, revoked: 0, unknown: 0, skipped: 0, outsideWindow: 0, ...risk };
   const inWindow = new Set(getBatches(db, workspaceId, deps.now()).filter((b) => b.inWindow).map((b) => b.number));
   const candidates = db
     .prepare(
@@ -239,7 +243,7 @@ export async function tick(deps: EngineDeps): Promise<void> {
   }
 
   const ids = deps.db
-    .prepare("SELECT DISTINCT workspace_id FROM reservation WHERE state IN ('RESERVED','CHARGE_FAILED','CHARGING')")
+    .prepare("SELECT DISTINCT workspace_id FROM reservation WHERE state IN ('RESERVED','CHARGE_FAILED','CHARGING','CHARGED','AT_RISK')")
     .all() as { workspace_id: string }[];
   for (const { workspace_id } of ids) {
     try {

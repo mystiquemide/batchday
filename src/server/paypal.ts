@@ -6,6 +6,7 @@ import {
   LogLevel,
   type LoggerInterface,
   OrdersController,
+  PaymentsController,
   PaypalPaymentTokenCustomerType,
   PaypalPaymentTokenUsageType,
   UsagePattern,
@@ -37,6 +38,7 @@ const silentLogger: LoggerInterface = { log: () => undefined };
 let client: Client | null = null;
 let vault: VaultController | null = null;
 let orders: OrdersController | null = null;
+let payments: PaymentsController | null = null;
 
 function sdkClient(): Client {
   if (client) return client;
@@ -59,6 +61,10 @@ function vaultClient(): VaultController {
 
 function ordersClient(): OrdersController {
   return (orders ??= new OrdersController(sdkClient()));
+}
+
+function paymentsClient(): PaymentsController {
+  return (payments ??= new PaymentsController(sdkClient()));
 }
 
 function debugIdOf(headers: Record<string, string> | undefined): string | null {
@@ -202,4 +208,18 @@ export async function deletePaymentToken(vaultId: string): Promise<{ debugId: st
     if (err instanceof PayPalError && err.status === 404) return { debugId: err.debugId, alreadyGone: true };
     throw err;
   }
+}
+
+/** Full refund of a capture. requestId makes a repeated refund return the original instead of failing or doubling. */
+export async function refundCapture(opts: { requestId: string; captureId: string; note: string }) {
+  const { result, debugId } = await call('capture refund', () =>
+    paymentsClient().refundCapturedPayment({
+      captureId: opts.captureId,
+      paypalRequestId: opts.requestId,
+      prefer: 'return=representation',
+      body: { noteToPayer: opts.note.slice(0, 255) },
+    }),
+  );
+  if (!result.id) throw new PayPalError('PayPal refund response missing id', 502, debugId, null);
+  return { refundId: result.id, status: (result.status as string | undefined) ?? null, debugId };
 }

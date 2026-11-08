@@ -84,6 +84,8 @@ export interface BatchSummary {
 }
 
 export interface ReservationView {
+  /** Seller views only, for refund actions. */
+  id?: string;
   publicToken?: string;
   state: ReservationState;
   batchNumber: number | null;
@@ -96,6 +98,10 @@ export interface ReservationView {
   /** Why a reserved buyer has not been charged yet (FR-011). Null once charging is possible or over. */
   refusal: Refusal | null;
   canCancel: boolean;
+  refundId: string | null;
+  refundStatus: string | null;
+  refundedAt: string | null;
+  canRefund: boolean;
 }
 
 export interface Refusal {
@@ -152,4 +158,16 @@ export interface BatchImpact {
   inWindowBefore: boolean;
   inWindowAfter: boolean;
   reserved: number;
+}
+
+export interface NoticeDraft {
+  key: string;
+  batchNumber: number;
+  kind: 'ship_date_changed' | 'at_risk';
+  recipients: string[];
+  facts: Record<string, string>;
+  subject: string;
+  body: string;
+  source: 'ai' | 'template';
+  sourceNote: string | null;
 }
