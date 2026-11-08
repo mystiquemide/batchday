@@ -2,6 +2,7 @@ import '@fontsource-variable/inter';
 import './landing.css';
 import { FinalCta } from './FinalCta';
 import { Fit } from './Fit';
+import { Footer } from './Footer';
 import { Hero } from './Hero';
 import { HowItWorks } from './HowItWorks';
 import { Nav } from './Nav';
@@ -22,6 +23,7 @@ export function Landing() {
         <Fit />
         <FinalCta />
       </main>
+      <Footer />
     </div>
   );
 }
