@@ -25,14 +25,14 @@ export function Rule() {
         <div className="lp-section-head">
           <p className="lp-label">The 20-day rule</p>
           <h2 id="lp-rule-title" className="lp-h2">
-            PayPal allows pre{'\u2011'}sales only when you ship within 20 days of payment.
+            PayPal allows pre{'\u2011'}sales only when you ship within 20 days of payment
           </h2>
         </div>
 
         <ul className="lp-facts">
           {FACTS.map(({ icon: Icon, title, body }) => (
             <li key={title} className="lp-fact">
-              <Icon size={24} strokeWidth={1.75} aria-hidden="true" className="lp-icon" />
+              <Icon size={18} strokeWidth={1.5} aria-hidden="true" className="lp-icon" />
               <h3 className="lp-h3">{title}</h3>
               <p className="lp-body">{body}</p>
             </li>
@@ -44,7 +44,6 @@ export function Rule() {
           <a href="https://stonemaiergames.com/the-danger-of-accepting-pre-orders-via-paypal/" target="_blank" rel="noreferrer">
             Stonemaier Games, 2017
           </a>
-          .
         </p>
       </div>
     </section>

@@ -5,10 +5,11 @@
   --lp-white: #ffffff;
   --lp-text: #15191e;
   --lp-text-2: #60646c;
-  --lp-text-3: #8b8d98;
+  --lp-text-3: #6f737b;
   --lp-hairline: rgba(66, 87, 138, 0.15);
-  --lp-accent: #ff3d00;
-  --lp-accent-hover: #ff5900;
+  --lp-accent: #d13200;
+  --lp-accent-vivid: #ff3d00;
+  --lp-accent-hover: #b82c00;
   --lp-dark: #000710;
   --lp-on-dark: #fcfcfd;
   --lp-max: 1120px;
@@ -33,7 +34,7 @@
   gap: 8px;
   height: 40px;
   padding: 0 20px;
-  border-radius: 12px;
+  border-radius: 10px;
   font-size: 15px;
   font-weight: 600;
   line-height: 1;
@@ -181,7 +182,7 @@
   color: var(--lp-text);
 }
 .lp-body { margin: 0; font-size: 16px; line-height: 1.5; color: var(--lp-text-2); }
-.lp-icon { color: var(--lp-accent); }
+.lp-icon { color: var(--lp-text-2); }
 .lp-source { margin: 48px 0 0; font-size: 14px; line-height: 1.5; color: var(--lp-text-3); }
 .lp .lp-source a { color: var(--lp-text-2); text-decoration: underline; text-underline-offset: 3px; }
 .lp .lp-source a:hover { color: var(--lp-text); }
@@ -310,7 +311,8 @@
   line-height: 1;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--lp-accent);
+  color: var(--lp-accent-vivid);
+  font-variant-numeric: tabular-nums;
 }
 .lp-stat .lp-body { margin-top: 16px; }
 .lp-ids { margin-top: 96px; }
@@ -386,3 +388,7 @@
   .lp-footer-top nav { margin-left: 0; }
   .lp-footer-links { margin: 8px 0 0; gap: 24px; }
 }
+
+/* Polish pass: muted text on the tinted band uses the secondary role for contrast, figures are tabular */
+.lp-bg-band .lp-source, .lp-bg-band .lp-caption { color: var(--lp-text-2); }
+.lp-ids-row dd, .lp-ledger-evidence { font-variant-numeric: tabular-nums; }

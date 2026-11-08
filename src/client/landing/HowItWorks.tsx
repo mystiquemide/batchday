@@ -19,7 +19,7 @@ const STEPS: Step[] = [
   {
     n: '01',
     label: 'Reserve',
-    title: 'The buyer saves PayPal. Nothing is charged.',
+    title: 'The buyer saves PayPal and pays nothing yet',
     body: 'One PayPal approval saves the wallet. The buyer gets a status page showing their batch, the ship date, and the day charging opens.',
     img: reserveShot,
     width: 840,
@@ -30,7 +30,7 @@ const STEPS: Step[] = [
   {
     n: '02',
     label: 'Plan',
-    title: 'Your production plan lives in a Bryntum Gantt.',
+    title: 'Your production plan lives in a Bryntum Gantt',
     body: 'Factory runs, QC, freight, and one ship milestone per batch, linked by dependencies. Move a task and everything after it reschedules. Each milestone shows when charging opens and who has paid.',
     img: planShot,
     width: 1800,
@@ -40,7 +40,7 @@ const STEPS: Step[] = [
   {
     n: '03',
     label: 'Update',
-    title: 'Paste a supplier email. AI proposes the change.',
+    title: 'Paste a supplier email and AI proposes the change',
     body: 'Gemini reads the message and proposes schedule changes, each with the exact words it relied on. You see the effect on every ship date before anything moves, and nothing changes until you apply it.',
     img: updateShot,
     width: 1388,
@@ -50,7 +50,7 @@ const STEPS: Step[] = [
   {
     n: '04',
     label: 'Charge',
-    title: 'Batches inside 20 days charge themselves.',
+    title: 'Batches inside 20 days charge themselves',
     body: 'When a batch comes within 20 days of shipping, every reserved buyer in it is charged through PayPal, once each. The order, capture, and debug IDs are logged for every charge.',
     img: chargeShot,
     width: 1246,
@@ -66,7 +66,7 @@ export function HowItWorks() {
         <div className="lp-section-head">
           <p className="lp-label">How it works</p>
           <h2 id="lp-how-title" className="lp-h2">
-            One production plan decides who pays, and when.
+            One production plan decides who pays, and when
           </h2>
         </div>
 
@@ -89,7 +89,7 @@ export function HowItWorks() {
           ))}
         </ol>
 
-        <p className="lp-source">All four images are captured from Batchday running against PayPal sandbox.</p>
+        <p className="lp-source">All four images are captured from Batchday running against PayPal sandbox</p>
       </div>
     </section>
   );

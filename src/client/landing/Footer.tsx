@@ -11,7 +11,7 @@ export function Footer() {
             <PackageCheck size={22} strokeWidth={2} aria-hidden="true" className="lp-footer-mark" />
             <span>Batchday</span>
           </a>
-          <p className="lp-footer-built">Built with PayPal, Bryntum Gantt, Gemini, and Render.</p>
+          <p className="lp-footer-built">Built with PayPal, Bryntum Gantt, Gemini, and Render</p>
           <nav aria-label="Footer">
             <ul className="lp-footer-links">
               <li><a href="/app">Open the app</a></li>

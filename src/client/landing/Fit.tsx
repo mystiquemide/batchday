@@ -1,9 +1,9 @@
 import { Check, X } from 'lucide-react';
 
 const FOR = [
-  'Board game publishers running reprints and second print runs.',
-  'Keyboard, merch, and hardware makers who sell restocks in batches.',
-  'Any seller who pays the factory up front and wants reservations without PayPal risk.',
+  'Board game publishers running reprints and second print runs',
+  'Keyboard, merch, and hardware makers who sell restocks in batches',
+  'Any seller who pays the factory up front and wants reservations without PayPal risk',
 ];
 
 const NOT_FOR = [
@@ -19,7 +19,7 @@ export function Fit() {
         <div className="lp-section-head">
           <p className="lp-label">Who it&rsquo;s for</p>
           <h2 id="lp-fit-title" className="lp-h2">
-            Made for sellers who can fund the batch.
+            Made for sellers who can fund the batch
           </h2>
         </div>
 
@@ -29,7 +29,7 @@ export function Fit() {
             <ul className="lp-fit-list">
               {FOR.map((t) => (
                 <li key={t}>
-                  <Check size={20} strokeWidth={2} aria-hidden="true" className="lp-fit-yes" />
+                  <Check size={18} strokeWidth={1.5} aria-hidden="true" className="lp-fit-yes" />
                   <span>{t}</span>
                 </li>
               ))}
@@ -40,7 +40,7 @@ export function Fit() {
             <ul className="lp-fit-list">
               {NOT_FOR.map((t) => (
                 <li key={t}>
-                  <X size={20} strokeWidth={2} aria-hidden="true" className="lp-fit-no" />
+                  <X size={18} strokeWidth={1.5} aria-hidden="true" className="lp-fit-no" />
                   <span>{t}</span>
                 </li>
               ))}

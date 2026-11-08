@@ -62,7 +62,7 @@ export function Refusals() {
         <div className="lp-section-head">
           <p className="lp-label">Negative proof</p>
           <h2 id="lp-refusals-title" className="lp-h2">
-            Built to say no.
+            Built to say no
           </h2>
           <p className="lp-lead">
             A payments product is judged by the charges it refuses. Every case below was tested in code or run against
@@ -79,7 +79,7 @@ export function Refusals() {
           {ROWS.map(({ icon: Icon, test, result, evidence }) => (
             <div key={test} className="lp-ledger-row" role="row">
               <div className="lp-ledger-case" role="cell">
-                <Icon size={20} strokeWidth={1.75} aria-hidden="true" className="lp-icon" />
+                <Icon size={18} strokeWidth={1.5} aria-hidden="true" className="lp-icon" />
                 <span>{test}</span>
               </div>
               <p className="lp-ledger-result" role="cell">{result}</p>

@@ -7,7 +7,7 @@ export function Hero() {
       <div className="lp-container">
         <div className="lp-hero-copy">
           <h1 id="lp-hero-title" className="lp-h1">
-            Pre-orders that charge only when the batch is ready to ship.
+            Pre-orders that charge only when the batch is ready to ship
           </h1>
           <p className="lp-lead">
             Buyers save PayPal today. Batchday charges each one automatically once their batch is within 20 days of
@@ -18,10 +18,10 @@ export function Hero() {
               Open the app
             </a>
             <a className="lp-textlink" href="#how-it-works">
-              See how it works <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
+              See how it works <ArrowRight size={18} strokeWidth={1.5} aria-hidden="true" />
             </a>
           </div>
-          <p className="lp-hero-note">PayPal sandbox. No signup.</p>
+          <p className="lp-hero-note">PayPal sandbox, no signup</p>
         </div>
 
         <figure className="lp-hero-shot">
@@ -36,7 +36,7 @@ export function Hero() {
             />
           </div>
           <figcaption className="lp-caption">
-            Captured from the Batchday console. Each ship milestone shows when charging opens and who has been charged.
+            Captured from the Batchday console, where each ship milestone shows when charging opens and who has been charged
           </figcaption>
         </figure>
       </div>

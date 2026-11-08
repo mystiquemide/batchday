@@ -19,7 +19,7 @@ export function Proof() {
         <div className="lp-section-head">
           <p className="lp-label">Proof</p>
           <h2 id="lp-proof-title" className="lp-h2">
-            Real money movement, in sandbox.
+            Real money movement, in sandbox
           </h2>
         </div>
 

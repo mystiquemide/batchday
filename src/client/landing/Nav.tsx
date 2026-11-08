@@ -24,7 +24,7 @@ export function Nav() {
           <li><a href="#proof">Proof</a></li>
           <li>
             <a href={REPO_URL} target="_blank" rel="noreferrer">
-              GitHub <ArrowUpRight size={14} strokeWidth={2} aria-hidden="true" />
+              GitHub <ArrowUpRight size={18} strokeWidth={1.5} aria-hidden="true" />
             </a>
           </li>
         </ul>
