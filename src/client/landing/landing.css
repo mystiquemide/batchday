@@ -151,3 +151,57 @@
 @media (prefers-reduced-motion: reduce) {
   .lp * { transition: none !important; }
 }
+
+/* Shared section scaffolding */
+.lp-section { padding: 128px 0; }
+.lp-bg-white { background: var(--lp-white); }
+.lp-bg-band { background: var(--lp-band); }
+.lp-section-head { max-width: 760px; }
+.lp-label {
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--lp-accent);
+}
+.lp-h2 {
+  margin: 0;
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--lp-text);
+}
+.lp-h3 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--lp-text);
+}
+.lp-body { margin: 0; font-size: 16px; line-height: 1.5; color: var(--lp-text-2); }
+.lp-icon { color: var(--lp-accent); }
+.lp-source { margin: 48px 0 0; font-size: 14px; line-height: 1.5; color: var(--lp-text-3); }
+.lp .lp-source a { color: var(--lp-text-2); text-decoration: underline; text-underline-offset: 3px; }
+.lp .lp-source a:hover { color: var(--lp-text); }
+
+/* [2] The 20-day rule */
+.lp-facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 48px;
+  margin: 64px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.lp-fact { padding-top: 24px; border-top: 1px solid var(--lp-hairline); }
+.lp-fact .lp-h3 { margin-top: 20px; }
+.lp-fact .lp-body { margin-top: 12px; }
+
+@media (max-width: 767px) {
+  .lp-section { padding: 80px 0; }
+  .lp-h2 { font-size: 32px; }
+  .lp-facts { grid-template-columns: 1fr; gap: 40px; margin-top: 48px; }
+  .lp-source { margin-top: 40px; }
+}
