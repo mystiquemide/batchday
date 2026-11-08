@@ -336,3 +336,25 @@
   .lp-ids { margin-top: 64px; }
   .lp-ids-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
 }
+
+/* [6] Who it's for */
+.lp-fit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  margin-top: 64px;
+  border-top: 1px solid var(--lp-hairline);
+}
+.lp-fit-col { padding: 32px 48px 0 0; }
+.lp-fit-col + .lp-fit-col { padding: 32px 0 0 48px; border-left: 1px solid var(--lp-hairline); }
+.lp-fit-title { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; color: var(--lp-text); }
+.lp-fit-list { margin: 24px 0 0; padding: 0; list-style: none; display: grid; gap: 20px; }
+.lp-fit-list li { display: flex; gap: 12px; font-size: 16px; line-height: 1.5; color: var(--lp-text-2); }
+.lp-fit-list svg { flex: none; margin-top: 2px; }
+.lp-fit-yes { color: #146c2e; }
+.lp-fit-no { color: var(--lp-text-3); }
+
+@media (max-width: 767px) {
+  .lp-fit { grid-template-columns: minmax(0, 1fr); margin-top: 48px; }
+  .lp-fit-col { padding: 28px 0 0; }
+  .lp-fit-col + .lp-fit-col { padding: 28px 0 0; margin-top: 32px; border-left: 0; border-top: 1px solid var(--lp-hairline); }
+}

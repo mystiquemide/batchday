@@ -1,5 +1,6 @@
 import '@fontsource-variable/inter';
 import './landing.css';
+import { Fit } from './Fit';
 import { Hero } from './Hero';
 import { HowItWorks } from './HowItWorks';
 import { Nav } from './Nav';
@@ -17,6 +18,7 @@ export function Landing() {
         <HowItWorks />
         <Refusals />
         <Proof />
+        <Fit />
       </main>
     </div>
   );
