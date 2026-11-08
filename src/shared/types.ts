@@ -93,6 +93,17 @@ export interface ReservationView {
   chargedAt: string | null;
   captureId: string | null;
   message: string | null;
+  /** Why a reserved buyer has not been charged yet (FR-011). Null once charging is possible or over. */
+  refusal: Refusal | null;
+  canCancel: boolean;
+}
+
+export interface Refusal {
+  code: 'NOT_YET_ELIGIBLE';
+  shipDate: string;
+  windowOpenDate: string;
+  daysToShip: number;
+  reason: string;
 }
 
 export interface CampaignView {

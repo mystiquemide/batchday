@@ -4,6 +4,7 @@ import {
   Client,
   Environment,
   LogLevel,
+  type LoggerInterface,
   OrdersController,
   PaypalPaymentTokenCustomerType,
   PaypalPaymentTokenUsageType,
@@ -30,6 +31,9 @@ function requireEnv(name: string): string {
   return value;
 }
 
+/** The SDK logs every request at the configured level. Batchday logs its own failures with debug IDs instead. */
+const silentLogger: LoggerInterface = { log: () => undefined };
+
 let client: Client | null = null;
 let vault: VaultController | null = null;
 let orders: OrdersController | null = null;
@@ -44,7 +48,7 @@ function sdkClient(): Client {
     },
     environment: env,
     timeout: 15_000,
-    logging: { logLevel: LogLevel.Error, logRequest: { logBody: false }, logResponse: { logBody: false } },
+    logging: { logger: silentLogger, logLevel: LogLevel.Error, logRequest: { logBody: false }, logResponse: { logBody: false } },
   });
   return client;
 }
@@ -97,7 +101,8 @@ export async function createSetupToken(opts: { requestId: string; returnUrl: str
             usagePattern: UsagePattern.Immediate,
             usageType: PaypalPaymentTokenUsageType.Merchant,
             customerType: PaypalPaymentTokenCustomerType.Consumer,
-            permitMultiplePaymentTokens: false,
+            // One token per reservation, so cancelling one reservation cannot revoke another by the same buyer.
+            permitMultiplePaymentTokens: true,
             experienceContext: {
               brandName: 'Batchday',
               returnUrl: opts.returnUrl,
@@ -186,4 +191,15 @@ export async function getOrderStatus(orderId: string) {
   const { result, debugId } = await call('order get', () => ordersClient().getOrder({ id: orderId }));
   const capture = result.purchaseUnits?.[0]?.payments?.captures?.[0];
   return { orderId: result.id ?? null, status: result.status ?? null, captureId: capture?.id ?? null, captureStatus: capture?.status ?? null, debugId };
+}
+
+/** Deletes a saved wallet at PayPal. Afterwards PayPal rejects any charge on it. 404 means it is already gone. */
+export async function deletePaymentToken(vaultId: string): Promise<{ debugId: string | null; alreadyGone: boolean }> {
+  try {
+    const { debugId } = await call('payment token delete', () => vaultClient().deletePaymentToken(vaultId));
+    return { debugId, alreadyGone: false };
+  } catch (err) {
+    if (err instanceof PayPalError && err.status === 404) return { debugId: err.debugId, alreadyGone: true };
+    throw err;
+  }
 }

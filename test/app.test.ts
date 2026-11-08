@@ -16,6 +16,8 @@ const paypal = {
     approveUrl: `https://www.sandbox.paypal.com/agreements/approve?approval_session_id=${o.requestId}`,
     debugId: 'dbg-setup',
   })),
+  chargeVault: vi.fn(),
+  deletePaymentToken: vi.fn(),
   createPaymentToken: vi.fn(async (_o: { requestId: string; setupTokenId: string }) => ({
     vaultId: `VAULT-${++vaultSeq}`,
     customerId: `CUST-${vaultSeq}`,

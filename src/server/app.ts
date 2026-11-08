@@ -1,11 +1,14 @@
 import express, { type Request, type Response } from 'express';
 import type { Db } from './db.js';
-import { PayPalError, chargeVault, createPaymentToken, createSetupToken } from './paypal.js';
+import { PayPalError, chargeVault, createPaymentToken, createSetupToken, deletePaymentToken } from './paypal.js';
 import { chargeLog, runEngine, type EngineSummary } from './engine.js';
 import { PlanRejected, getPlanVersion, savePlan } from './plan.js';
 import {
   abandon,
   attachSetupToken,
+  cancelReservation,
+  markTokenDeleted,
+  tokenNeededElsewhere,
   createPendingReservation,
   createWorkspace,
   getBatches,
@@ -17,6 +20,7 @@ import {
   setPendingMessage,
   toView,
   confirmReservation,
+  type ReservationRow,
 } from './store.js';
 import { WINDOW_DAYS } from '../shared/types.js';
 
@@ -41,14 +45,19 @@ function paypalErrorBody(err: unknown) {
 export interface AppDeps {
   db: Db;
   publicBaseUrl: string;
-  paypal?: { createSetupToken: typeof createSetupToken; createPaymentToken: typeof createPaymentToken; chargeVault: typeof chargeVault };
+  paypal?: {
+    createSetupToken: typeof createSetupToken;
+    createPaymentToken: typeof createPaymentToken;
+    chargeVault: typeof chargeVault;
+    deletePaymentToken: typeof deletePaymentToken;
+  };
   now?: () => Date;
 }
 
 export function createApp({
   db,
   publicBaseUrl,
-  paypal = { createSetupToken, createPaymentToken, chargeVault },
+  paypal = { createSetupToken, createPaymentToken, chargeVault, deletePaymentToken },
   now = () => new Date(),
 }: AppDeps) {
   const app = express();
@@ -80,16 +89,19 @@ export function createApp({
     res.status(201).json({ workspaceId: id });
   });
 
-  const workspaceView = (id: string, engine?: EngineSummary) => ({
+  const workspaceView = (id: string, engine?: EngineSummary) => {
+    const batches = getBatches(db, id, now());
+    return {
     campaign: getCampaign(db, id),
     planVersion: getPlanVersion(db, id),
     plan: getPlan(db, id),
-    batches: getBatches(db, id, now()),
-    reservations: listReservations(db, id).map((r) => toView(r, false)),
+    batches,
+    reservations: listReservations(db, id).map((r) => toView(r, false, batches)),
     charges: chargeLog(db, id),
     windowDays: WINDOW_DAYS,
     ...(engine ? { engine } : {}),
-  });
+    };
+  };
 
   app.get('/api/workspace', (req, res) => {
     const id = sellerWorkspace(req, res);
@@ -185,9 +197,41 @@ export function createApp({
     const token = req.params.publicToken;
     const r = HEX32.test(token) ? getReservationByPublicToken(db, token) : null;
     if (!r) return res.status(404).json({ error: 'Reservation not found.' });
-    const campaign = getCampaign(db, r.workspace_id)!;
-    const batch = r.batch_number === null ? null : getBatches(db, r.workspace_id, now()).find((b) => b.number === r.batch_number) ?? null;
-    res.json({ campaign, reservation: toView(r, false), batch, windowDays: WINDOW_DAYS });
+    res.json(publicReservation(r.id));
+  });
+
+  function publicReservation(reservationId: string) {
+    const r = db.prepare('SELECT * FROM reservation WHERE id = ?').get(reservationId) as ReservationRow;
+    const batches = getBatches(db, r.workspace_id, now());
+    const batch = r.batch_number === null ? null : batches.find((b) => b.number === r.batch_number) ?? null;
+    return { campaign: getCampaign(db, r.workspace_id)!, reservation: toView(r, false, batches), batch, windowDays: WINDOW_DAYS };
+  }
+
+  // FR-013: buyer cancels before being charged; the saved wallet is deleted at PayPal.
+  app.post('/api/public/reservation/:publicToken/cancel', async (req, res) => {
+    const token = req.params.publicToken;
+    const r = HEX32.test(token) ? getReservationByPublicToken(db, token) : null;
+    if (!r) return res.status(404).json({ error: 'Reservation not found.' });
+
+    const outcome = cancelReservation(db, r.id);
+    if (outcome === 'in_progress') {
+      return res.status(409).json({ error: 'A charge for this reservation is being processed right now. Refresh in a moment.' });
+    }
+    if (outcome === 'not_cancellable') {
+      return res.status(409).json({ error: 'This reservation can no longer be cancelled here.' });
+    }
+    // A wallet shared with another live reservation is deleted later by the tick, once nothing needs it.
+    if (outcome === 'cancelled' && r.vault_id && !tokenNeededElsewhere(db, r.id, r.vault_id)) {
+      try {
+        const del = await paypal.deletePaymentToken(r.vault_id);
+        markTokenDeleted(db, r.id, del.debugId, now());
+      } catch (err) {
+        // The reservation is already CANCELLED and excluded from charging; the tick retries the delete.
+        const pe = err instanceof PayPalError ? err : null;
+        console.error('token delete failed', pe ? { status: pe.status, debugId: pe.debugId, issue: pe.issue } : err);
+      }
+    }
+    res.json(publicReservation(r.id));
   });
 
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found.' }));

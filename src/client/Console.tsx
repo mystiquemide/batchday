@@ -179,7 +179,11 @@ export function Console() {
                     <td>{r.batchNumber ?? '-'}</td>
                     <td><StateBadge state={r.state} /></td>
                     <td>{new Date(r.createdAt).toLocaleString()}</td>
-                    <td>{r.chargedAt ? new Date(r.chargedAt).toLocaleString() : '-'}{r.message && <div className="muted small">{r.message}</div>}</td>
+                    <td>
+                      {r.chargedAt ? new Date(r.chargedAt).toLocaleString() : r.refusal ? `Opens ${formatDate(r.refusal.windowOpenDate)}` : '-'}
+                      {r.refusal && <div className="muted small">{r.refusal.reason}</div>}
+                      {r.message && <div className="muted small">{r.message}</div>}
+                    </td>
                   </tr>
                 ))}
               </tbody>

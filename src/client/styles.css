@@ -44,3 +44,6 @@ th { color: #5b6470; font-weight: 500; }
 .o-completed { background: #e3f7e9; color: #146c2e; }
 .o-declined, .o-failed, .o-revoked { background: #fdecea; color: #b42318; }
 .o-unknown, .o-pending { background: #fff3d6; color: #7a5300; }
+.cancel { margin-top: 20px; }
+.cancel .row { gap: 8px; }
+button.danger { background: #b42318; border-color: #b42318; color: #fff; font-weight: 600; }

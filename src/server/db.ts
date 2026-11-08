@@ -84,6 +84,8 @@ CREATE INDEX IF NOT EXISTS charge_attempt_ws ON charge_attempt(workspace_id, id)
 const COLUMN_MIGRATIONS: { table: string; column: string; ddl: string }[] = [
   { table: 'task', column: 'constraint_type', ddl: 'ALTER TABLE task ADD COLUMN constraint_type TEXT' },
   { table: 'task', column: 'constraint_date', ddl: 'ALTER TABLE task ADD COLUMN constraint_date TEXT' },
+  { table: 'reservation', column: 'token_deleted_at', ddl: 'ALTER TABLE reservation ADD COLUMN token_deleted_at TEXT' },
+  { table: 'reservation', column: 'token_delete_debug_id', ddl: 'ALTER TABLE reservation ADD COLUMN token_delete_debug_id TEXT' },
   { table: 'workspace', column: 'plan_version', ddl: 'ALTER TABLE workspace ADD COLUMN plan_version INTEGER NOT NULL DEFAULT 1' },
 ];
 

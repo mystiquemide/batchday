@@ -5,8 +5,10 @@ import {
   type CampaignView,
   type PlanDependency,
   type PlanTask,
+  type Refusal,
   type ReservationState,
   type ReservationView,
+  WINDOW_DAYS,
 } from '../shared/types.js';
 import type { Db } from './db.js';
 import { addDays, daysBetween, isInWindow, todayUtc, windowOpenDate } from './dates.js';
@@ -31,6 +33,8 @@ export interface ReservationRow {
   order_id: string | null;
   capture_id: string | null;
   refund_id: string | null;
+  token_deleted_at?: string | null;
+  token_delete_debug_id?: string | null;
 }
 
 const capacityStates = CAPACITY_STATES.map((s) => `'${s}'`).join(',');
@@ -205,8 +209,28 @@ export function confirmReservation(
   }).immediate();
 }
 
+const CANCELLABLE: ReservationState[] = ['RESERVED', 'CHARGE_FAILED'];
+
+function displayDate(iso: string): string {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+}
+
+/** FR-011: a reserved buyer outside the window gets the dates and the rule, not a silent wait. */
+export function refusalFor(r: Pick<ReservationRow, 'state' | 'batch_number'>, batches: BatchSummary[]): Refusal | null {
+  if (r.state !== 'RESERVED' || r.batch_number === null) return null;
+  const b = batches.find((x) => x.number === r.batch_number);
+  if (!b || b.inWindow) return null;
+  return {
+    code: 'NOT_YET_ELIGIBLE',
+    shipDate: b.shipDate,
+    windowOpenDate: b.windowOpenDate,
+    daysToShip: b.daysToShip,
+    reason: `Batch ${b.number} ships ${displayDate(b.shipDate)}, ${b.daysToShip} days away. Charging opens ${displayDate(b.windowOpenDate)} under the ${WINDOW_DAYS}-day rule.`,
+  };
+}
+
 /** NFR-001: the only reservation shape that leaves the server. Never includes vault_id. */
-export function toView(r: ReservationRow, includePublicToken: boolean): ReservationView {
+export function toView(r: ReservationRow, includePublicToken: boolean, batches: BatchSummary[]): ReservationView {
   return {
     ...(includePublicToken ? { publicToken: r.public_token } : {}),
     state: r.state,
@@ -217,7 +241,67 @@ export function toView(r: ReservationRow, includePublicToken: boolean): Reservat
     chargedAt: r.charged_at,
     captureId: r.capture_id,
     message: r.message,
+    refusal: refusalFor(r, batches),
+    canCancel: CANCELLABLE.includes(r.state),
   };
+}
+
+export type CancelOutcome = 'cancelled' | 'abandoned' | 'already_cancelled' | 'in_progress' | 'not_cancellable';
+
+/**
+ * FR-013: buyer cancel. The state change happens first, in one statement guarded by the
+ * current state, so the charge engine can no longer claim the reservation. Deleting the
+ * token at PayPal follows; if that fails, the reservation stays CANCELLED and the tick retries.
+ */
+export function cancelReservation(db: Db, reservationId: string): CancelOutcome {
+  return db.transaction((): CancelOutcome => {
+    const r = db.prepare('SELECT state FROM reservation WHERE id = ?').get(reservationId) as { state: ReservationState };
+    if (r.state === 'CANCELLED') return 'already_cancelled';
+    if (r.state === 'PENDING_APPROVAL') {
+      db.prepare("UPDATE reservation SET state = 'ABANDONED', message = 'You cancelled before approving at PayPal. Nothing was charged.' WHERE id = ?").run(reservationId);
+      return 'abandoned';
+    }
+    if (r.state === 'CHARGING') return 'in_progress';
+    if (!CANCELLABLE.includes(r.state)) return 'not_cancellable';
+    const moved = db
+      .prepare(
+        `UPDATE reservation SET state = 'CANCELLED', message = 'You cancelled this reservation. Nothing was charged.'
+          WHERE id = ? AND state IN ('RESERVED','CHARGE_FAILED')`,
+      )
+      .run(reservationId).changes;
+    return moved === 1 ? 'cancelled' : 'not_cancellable';
+  }).immediate();
+}
+
+export function markTokenDeleted(db: Db, reservationId: string, debugId: string | null, now = new Date()): void {
+  db.prepare('UPDATE reservation SET token_deleted_at = ?, token_delete_debug_id = ? WHERE id = ? AND token_deleted_at IS NULL').run(
+    now.toISOString(), debugId, reservationId,
+  );
+}
+
+/** States that still need the saved wallet for a future charge. */
+const TOKEN_NEEDED = "('RESERVED','CHARGING','CHARGE_FAILED')";
+
+/**
+ * True when another reservation still needs this saved wallet. Tokens vaulted before each
+ * reservation got its own token can be shared by one buyer's reservations; deleting a shared
+ * token would revoke the buyer's other reservations too.
+ */
+export function tokenNeededElsewhere(db: Db, reservationId: string, vaultId: string): boolean {
+  return Boolean(
+    db.prepare(`SELECT 1 FROM reservation WHERE vault_id = ? AND id != ? AND state IN ${TOKEN_NEEDED} LIMIT 1`).get(vaultId, reservationId),
+  );
+}
+
+/** Cancelled reservations whose saved wallet should now be deleted at PayPal. */
+export function pendingTokenDeletes(db: Db): { id: string; vault_id: string }[] {
+  return db
+    .prepare(
+      `SELECT r.id, r.vault_id FROM reservation r
+        WHERE r.state = 'CANCELLED' AND r.vault_id IS NOT NULL AND r.token_deleted_at IS NULL
+          AND NOT EXISTS (SELECT 1 FROM reservation o WHERE o.vault_id = r.vault_id AND o.id != r.id AND o.state IN ${TOKEN_NEEDED})`,
+    )
+    .all() as { id: string; vault_id: string }[];
 }
 
 export function listReservations(db: Db, workspaceId: string): ReservationRow[] {

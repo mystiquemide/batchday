@@ -5,6 +5,22 @@ import { StateBadge } from './StateBadge';
 export function Status({ publicToken }: { publicToken: string }) {
   const [data, setData] = useState<PublicReservation | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+
+  async function cancel() {
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      setData(await api.cancel(publicToken));
+      setConfirming(false);
+    } catch (err) {
+      setCancelError((err as Error).message);
+    } finally {
+      setCancelling(false);
+    }
+  }
 
   useEffect(() => {
     api.getReservation(publicToken).then(setData, (err) => setError(err.message));
@@ -32,8 +48,31 @@ export function Status({ publicToken }: { publicToken: string }) {
           <dt>Price</dt><dd>${data.campaign.unitPrice} {data.campaign.currency}</dd>
         </dl>
       )}
-      {r.state === 'RESERVED' && (
-        <p className="rule">You will be charged when batch {b?.number} is within {data.windowDays} days of shipping. Keep this page link to check your status.</p>
+      {r.refusal && (
+        <p className="rule">
+          Not charged yet. {r.refusal.reason} Keep this page link to check your status.
+        </p>
+      )}
+      {r.state === 'RESERVED' && !r.refusal && (
+        <p className="rule">Your batch is within {data.windowDays} days of shipping. Your charge will be processed shortly.</p>
+      )}
+      {r.canCancel && (
+        <div className="cancel">
+          {cancelError && <p role="alert" className="error">{cancelError}</p>}
+          {!confirming ? (
+            <button onClick={() => setConfirming(true)}>Cancel reservation</button>
+          ) : (
+            <>
+              <p>Cancel this reservation? Your saved PayPal wallet will be removed and you will not be charged.</p>
+              <div className="row">
+                <button className="danger" onClick={cancel} disabled={cancelling}>
+                  {cancelling ? 'Cancelling...' : 'Yes, cancel'}
+                </button>
+                <button onClick={() => setConfirming(false)} disabled={cancelling}>Keep reservation</button>
+              </div>
+            </>
+          )}
+        </div>
       )}
     </main>
   );

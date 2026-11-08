@@ -1,7 +1,7 @@
 import type { ChargeLogRow, ChargeOutcome, ReservationState } from '../shared/types.js';
 import type { Db } from './db.js';
-import { PayPalError, type ChargeResult, chargeVault } from './paypal.js';
-import { getBatches, getCampaign } from './store.js';
+import { PayPalError, type ChargeResult, chargeVault, deletePaymentToken } from './paypal.js';
+import { getBatches, getCampaign, markTokenDeleted, pendingTokenDeletes } from './store.js';
 
 /** CHARGE_FAILED gets one automatic retry (state model), so at most two failed attempts. */
 const MAX_FAILED_ATTEMPTS = 2;
@@ -11,7 +11,7 @@ const PENDING_APPROVAL_TTL_MS = 3 * 86_400_000;
 
 export interface EngineDeps {
   db: Db;
-  paypal?: { chargeVault: typeof chargeVault };
+  paypal?: { chargeVault: typeof chargeVault; deletePaymentToken?: typeof deletePaymentToken };
   now?: () => Date;
 }
 
@@ -227,6 +227,17 @@ export async function tick(deps: EngineDeps): Promise<void> {
       "UPDATE reservation SET state = 'ABANDONED', message = 'PayPal approval was not completed within 3 days.' WHERE state = 'PENDING_APPROVAL' AND created_at < ?",
     )
     .run(new Date(now.getTime() - PENDING_APPROVAL_TTL_MS).toISOString());
+  // Finish PayPal-side deletion for cancellations whose delete call failed earlier.
+  const del = deps.paypal?.deletePaymentToken ?? deletePaymentToken;
+  for (const r of pendingTokenDeletes(deps.db)) {
+    try {
+      const out = await del(r.vault_id);
+      markTokenDeleted(deps.db, r.id, out.debugId, now);
+    } catch (err) {
+      console.error('token delete retry failed', err instanceof PayPalError ? { status: err.status, debugId: err.debugId } : err);
+    }
+  }
+
   const ids = deps.db
     .prepare("SELECT DISTINCT workspace_id FROM reservation WHERE state IN ('RESERVED','CHARGE_FAILED','CHARGING')")
     .all() as { workspace_id: string }[];

@@ -59,6 +59,7 @@ export const api = {
   getCampaign: (id: string) => request<PublicCampaign>('GET', `/api/public/campaign/${id}`),
   reserve: (id: string) => request<{ approveUrl: string; statusPath: string }>('POST', `/api/public/campaign/${id}/reserve`),
   getReservation: (token: string) => request<PublicReservation>('GET', `/api/public/reservation/${token}`),
+  cancel: (token: string) => request<PublicReservation>('POST', `/api/public/reservation/${token}/cancel`),
 };
 
 export function formatDate(iso: string): string {
