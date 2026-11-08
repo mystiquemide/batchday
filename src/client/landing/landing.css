@@ -144,8 +144,8 @@
   .lp-hero-actions { margin-top: 32px; gap: 20px; }
   .lp-hero-shot { margin-top: 48px; }
   /* Keep the Gantt legible on phones: show the grid side at readable size and let the frame scroll. */
-  .lp-frame { overflow-x: auto; }
-  .lp-frame img { width: 720px; max-width: none; }
+  .lp-hero-shot .lp-frame { overflow-x: auto; }
+  .lp-hero-shot .lp-frame img { width: 720px; max-width: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -153,7 +153,7 @@
 }
 
 /* Shared section scaffolding */
-.lp-section { padding: 128px 0; }
+.lp-section { padding: 128px 0; scroll-margin-top: 64px; }
 .lp-bg-white { background: var(--lp-white); }
 .lp-bg-band { background: var(--lp-band); }
 .lp-section-head { max-width: 760px; }
@@ -204,4 +204,47 @@
   .lp-h2 { font-size: 32px; }
   .lp-facts { grid-template-columns: 1fr; gap: 40px; margin-top: 48px; }
   .lp-source { margin-top: 40px; }
+}
+
+/* [3] How it works */
+.lp-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.lp-steps { margin: 80px 0 0; padding: 0; list-style: none; display: grid; gap: 112px; }
+.lp-step {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 64px;
+  align-items: center;
+}
+.lp-step-flip { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+.lp-step-flip .lp-step-copy { order: 2; }
+.lp-step-flip .lp-step-shot { order: 1; }
+.lp-step-num {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--lp-accent);
+}
+.lp-step-num .lp-mono { margin-right: 6px; }
+.lp-step-title {
+  margin: 16px 0 0;
+  font-size: 32px;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--lp-text);
+}
+.lp-step-copy .lp-body { margin-top: 16px; }
+.lp-step-shot-narrow .lp-frame { max-width: 420px; margin: 0 auto; }
+
+@media (max-width: 1023px) {
+  .lp-step, .lp-step-flip { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .lp-step-flip .lp-step-copy, .lp-step-flip .lp-step-shot { order: 0; }
+}
+@media (max-width: 767px) {
+  .lp-steps { margin-top: 56px; gap: 72px; }
+  .lp-step-title { font-size: 26px; }
+  /* Wide captures keep a readable size on phones and scroll sideways inside their frame. */
+  .lp-step-shot:not(.lp-step-shot-narrow) .lp-frame { overflow-x: auto; }
+  .lp-step-shot:not(.lp-step-shot-narrow) .lp-frame img { min-width: 600px; }
 }
