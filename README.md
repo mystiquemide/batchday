@@ -70,8 +70,8 @@ AI evaluation: 12 of 12 supplier messages handled as expected (clear delay, earl
 
 | What | ID |
 |---|---|
-| Hosted run, supplier update applied, batch 1 charged | Orders `41N44309SF915910W`, `9E814319X6255673V` |
-| Earlier hosted run | Orders `0SE11503D52576713`, `9UA241508V2781913` |
+| Hosted run, merchant-initiated stored-credential charges, batch 1 charged | Orders `6VM006656V670445U`, `1XG96684U1823264M` |
+| Earlier hosted runs | Orders `41N44309SF915910W`, `9E814319X6255673V`, `0SE11503D52576713`, `9UA241508V2781913` |
 | Plan change charged two buyers | Orders `0SJ11939BJ923791S`, `0M863347WK575080W` (GET returns COMPLETED) |
 | Charge on a deleted wallet refused by PayPal | HTTP 403 PERMISSION_DENIED, debug `f5999007f5cf4` |
 | At-risk buyer refunded from the console | Refund `9SV7710612642500S`, COMPLETED |
@@ -106,7 +106,7 @@ Every reservation, charge, cancellation, and refund shown in the app comes from 
 
 ## Built with
 
-- PayPal: Vault v3 setup and payment tokens, Orders v2 with `vault_id`, Payments v2 refunds, and webhooks with signature verification, via the APIMatic-generated `@paypal/paypal-server-sdk`
+- PayPal: Vault v3 setup and payment tokens (deferred usage), Orders v2 with `vault_id` and a merchant-initiated stored credential, Payments v2 refunds, and webhooks with signature verification, via the APIMatic-generated `@paypal/paypal-server-sdk`
 - Bryntum Gantt Community 8.0.0: dependency scheduling that produces every ship date, plus the window state on each ship milestone
 - Gemini (`gemini-3.6-flash`, fallback `gemini-3.5-flash-lite`): schema-constrained supplier parsing and notice drafts
 - Render for hosting, with React, Vite, Express, and SQLite
