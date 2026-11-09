@@ -4,6 +4,7 @@ import { PayPalError, chargeVault, createPaymentToken, createSetupToken, deleteP
 import { RefundRejected, evaluateRisk, refundReservation } from './risk.js';
 import { type Drafter, draftNotices, geminiDrafter, markNotified } from './notices.js';
 import { type VerifyFn, handleWebhook, verifyWithPayPal } from './webhooks.js';
+import { DEFAULT_LIMITS, type Limits, rateLimit, securityHeaders } from './guard.js';
 import { chargeLog, runEngine, type EngineSummary } from './engine.js';
 import { PlanRejected, getPlanVersion, savePlan } from './plan.js';
 import { UpdateRejected, geminiParser, getUpdate, listUpdates, previewImpact, resolveUpdate, submitUpdate } from './supplier.js';
@@ -60,6 +61,7 @@ export interface AppDeps {
   parseSupplierText?: typeof geminiParser;
   draftNotice?: Drafter;
   verifyWebhook?: VerifyFn;
+  limits?: Limits;
 }
 
 export function createApp({
@@ -70,9 +72,17 @@ export function createApp({
   parseSupplierText = geminiParser,
   draftNotice = geminiDrafter,
   verifyWebhook = verifyWithPayPal,
+  limits = DEFAULT_LIMITS,
 }: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
+  // Render and similar hosts put one proxy in front; trust it so req.ip is the real client.
+  app.set('trust proxy', 1);
+  app.use(securityHeaders);
+  const HOUR = 3_600_000;
+  const limitWorkspaces = rateLimit({ max: limits.workspacesPerHour, windowMs: HOUR, message: 'Too many workspaces from this network. Try again later.' });
+  const limitReserve = rateLimit({ max: limits.reservationsPerHour, windowMs: HOUR, message: 'Too many reservation attempts. Try again later.' });
+  const limitCancel = rateLimit({ max: limits.cancelsPerHour, windowMs: HOUR, message: 'Too many requests. Try again later.' });
 
   // FR-021: raw body, so PayPal can verify the signature over exactly what it sent.
   app.post('/api/paypal/webhook', express.text({ type: '*/*', limit: '200kb' }), async (req, res) => {
@@ -98,7 +108,7 @@ export function createApp({
     return id;
   }
 
-  app.post('/api/workspace', (_req, res) => {
+  app.post('/api/workspace', limitWorkspaces, (_req, res) => {
     const id = createWorkspace(db, now());
     res.cookie(COOKIE, id, {
       httpOnly: true,
@@ -219,8 +229,8 @@ export function createApp({
     res.json({ campaign, nextBatch: next, soldOut: next === null, windowDays: WINDOW_DAYS });
   });
 
-  app.post('/api/public/campaign/:workspaceId/reserve', async (req, res) => {
-    const id = req.params.workspaceId;
+  app.post('/api/public/campaign/:workspaceId/reserve', limitReserve, async (req, res) => {
+    const id = String(req.params.workspaceId);
     const campaign = HEX32.test(id) ? getCampaign(db, id) : null;
     if (!campaign) return res.status(404).json({ error: 'This reservation link is not valid.' });
     if (!nextOpenBatch(db, id, now())) return res.status(409).json({ error: 'Sold out. Every batch is full.' });
@@ -293,8 +303,8 @@ export function createApp({
   }
 
   // FR-013: buyer cancels before being charged; the saved wallet is deleted at PayPal.
-  app.post('/api/public/reservation/:publicToken/cancel', async (req, res) => {
-    const token = req.params.publicToken;
+  app.post('/api/public/reservation/:publicToken/cancel', limitCancel, async (req, res) => {
+    const token = String(req.params.publicToken);
     const r = HEX32.test(token) ? getReservationByPublicToken(db, token) : null;
     if (!r) return res.status(404).json({ error: 'Reservation not found.' });
 

@@ -8,3 +8,8 @@ dist/
 memory.md
 .DS_Store
 data/
+
+# Internal planning files, kept local only
+PROJECT_PLAN.md
+PROJECT_STATE.md
+WIN_PLAN.md
