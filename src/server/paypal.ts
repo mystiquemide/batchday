@@ -8,7 +8,9 @@ import {
   OrdersController,
   PaymentsController,
   PaypalPaymentTokenCustomerType,
+  PaymentInitiator,
   PaypalPaymentTokenUsageType,
+  StoredPaymentSourceUsageType,
   UsagePattern,
   VaultController,
   VaultTokenRequestType,
@@ -104,7 +106,8 @@ export async function createSetupToken(opts: { requestId: string; returnUrl: str
         paymentSource: {
           paypal: {
             description: opts.description,
-            usagePattern: UsagePattern.Immediate,
+            // Post-paid, irregular: the buyer is charged later, when their batch nears shipping.
+            usagePattern: UsagePattern.Deferred,
             usageType: PaypalPaymentTokenUsageType.Merchant,
             customerType: PaypalPaymentTokenCustomerType.Consumer,
             // One token per reservation, so cancelling one reservation cannot revoke another by the same buyer.
@@ -179,7 +182,17 @@ export async function chargeVault(opts: {
             amount: { currencyCode: opts.currency, value: opts.amount },
           },
         ],
-        paymentSource: { paypal: { vaultId: opts.vaultId } },
+        paymentSource: {
+          paypal: {
+            vaultId: opts.vaultId,
+            // Declares a merchant-initiated charge on a saved wallet, matching how it was vaulted.
+            storedCredential: {
+              paymentInitiator: PaymentInitiator.Merchant,
+              usagePattern: UsagePattern.Deferred,
+              usage: StoredPaymentSourceUsageType.Subsequent,
+            },
+          },
+        },
       },
     }),
   );
