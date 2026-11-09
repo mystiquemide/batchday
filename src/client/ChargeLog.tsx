@@ -1,4 +1,6 @@
+import { Download } from 'lucide-react';
 import type { ChargeLogRow } from '../shared/types';
+import { toCsv } from '../shared/csv';
 import { formatDate } from './api';
 
 const OUTCOME: Record<ChargeLogRow['outcome'], string> = {
@@ -11,10 +13,33 @@ const OUTCOME: Record<ChargeLogRow['outcome'], string> = {
   SKIPPED: 'Skipped, left window',
 };
 
+function exportCsv(rows: ChargeLogRow[]) {
+  const csv = toCsv(
+    ['time', 'buyer', 'batch', 'batch_ships', 'amount_usd', 'outcome', 'attempt', 'http_status', 'paypal_order', 'paypal_capture', 'paypal_debug_id', 'detail'],
+    rows.map((r) => [
+      r.finishedAt ?? r.createdAt, r.buyerEmail, r.batchNumber, r.shipDate, r.amount, r.outcome, r.attemptNo,
+      r.httpStatus, r.orderId, r.captureId, r.paypalDebugId, r.detail,
+    ]),
+  );
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `batchday-charge-log-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export function ChargeLog({ rows }: { rows: ChargeLogRow[] }) {
   return (
     <div className="panel">
-      <h2>Charge log</h2>
+      <div className="panel-head">
+        <h2>Charge log</h2>
+        {rows.length > 0 && (
+          <button type="button" className="small-btn" onClick={() => exportCsv(rows)}>
+            <Download size={16} strokeWidth={1.5} aria-hidden="true" /> Export CSV
+          </button>
+        )}
+      </div>
       {rows.length === 0 ? (
         <p className="muted">No charges yet. Reservations are charged automatically once their batch ships within 20 days.</p>
       ) : (

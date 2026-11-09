@@ -87,3 +87,6 @@ details { margin-top: 12px; font-size: 14px; }
 .bd-tip { font-size: 13px; line-height: 1.5; max-width: 280px; }
 .bd-tip-state { margin-top: 4px; font-weight: 600; }
 .bd-tip-rule { margin-top: 4px; color: #60646c; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.panel-head h2 { margin: 0; }
+.panel-head .small-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 0; }
