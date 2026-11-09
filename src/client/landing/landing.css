@@ -89,9 +89,46 @@
 .lp-nav-links a:hover { color: var(--lp-text); }
 .lp-nav .lp-btn { margin-left: auto; }
 
+/* Phone menu: hidden on desktop, a button plus a drop-down list below 768px */
+.lp-menu-btn { display: none; }
+.lp-mobile-menu { display: none; }
+
 @media (max-width: 767px) {
-  .lp-nav-inner { height: 56px; gap: 16px; }
+  .lp-nav-inner { height: 56px; gap: 12px; }
   .lp-nav-links { display: none; }
+  .lp-nav .lp-btn { margin-left: auto; }
+  .lp-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--lp-hairline);
+    border-radius: 10px;
+    background: var(--lp-white);
+    color: var(--lp-text);
+    cursor: pointer;
+    transition: background-color 150ms ease;
+  }
+  .lp-menu-btn:hover { background: var(--lp-band); }
+  .lp-mobile-menu:not([hidden]) {
+    display: grid;
+    margin: 0;
+    padding: 8px 24px 16px;
+    list-style: none;
+    border-top: 1px solid var(--lp-hairline);
+    background: var(--lp-white);
+  }
+  .lp-mobile-menu a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--lp-text);
+  }
 }
 
 /* Shared layout and type */
