@@ -113,16 +113,46 @@ Every reservation, charge, cancellation, and refund shown in the app comes from 
 - Gemini (`gemini-3.6-flash`, fallback `gemini-3.5-flash-lite`): schema-constrained supplier parsing and notice drafts
 - Render for hosting, with React, Vite, Express, and SQLite
 
+## Architecture
+
+```
+Buyer page  ──Reserve──▶  Express API  ──Vault v3──▶  PayPal (wallet saved, $0)
+                              │
+Seller console (React)        │  plan saved after every reschedule
+  Bryntum Gantt ─dataReady──▶ │
+                              ▼
+                        Charge engine ── ship date ≤ 20 days? ──▶ Orders v2 with vault_id
+                              ▲                                    (one capture per buyer)
+Supplier email ─▶ Gemini ─▶ proposal ─▶ seller clicks Apply ─▶ Bryntum reschedules
+```
+
+- `src/client/PlanGantt.tsx` holds the Bryntum Gantt: dependency scheduling, the Ships / Charge opens / Buyers columns, ship milestone colors, and the rule tooltip.
+- `src/server/engine.ts` is the charge engine. It's deterministic, idempotent, and re-checks the window right before each PayPal call.
+- `src/server/paypal.ts` wraps Vault v3, Orders v2, refunds and token deletion through `@paypal/paypal-server-sdk`.
+- `src/server/supplier.ts` and `src/server/gemini.ts` handle supplier parsing, the quote check and notice drafts.
+- `src/server/webhooks.ts` verifies PayPal webhook signatures.
+
 ## Run locally
+
+You need Node 22, a [PayPal developer](https://developer.paypal.com) sandbox REST app, a sandbox personal account to pay with, and a [Gemini API key](https://aistudio.google.com/apikey).
 
 ```bash
 git clone https://github.com/mystiquemide/batchday && cd batchday
 npm install
-cp .env.example .env   # add PayPal sandbox and Gemini keys
+cp .env.example .env
 npm run build && npm start
 ```
 
-Then open http://localhost:3000 for the landing page and http://localhost:3000/app for the seller console. PayPal sandbox approval redirects back to `PUBLIC_BASE_URL`.
+Fill in `.env` before starting:
+
+| Variable | What it is |
+|---|---|
+| `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` | Credentials of your sandbox REST app |
+| `GEMINI_API_KEY` | Used for supplier updates and notice drafts |
+| `PUBLIC_BASE_URL` | Where PayPal sends the buyer back after approval. Use `http://localhost:3000` locally |
+| `PAYPAL_WEBHOOK_ID` | Optional. Needs a public URL. Run `npm run webhook:register` after deploying |
+
+Open http://localhost:3000 for the landing page and http://localhost:3000/app for the seller console. `npm run check:paypal` confirms your PayPal credentials, `npm test` runs the test suite, and `npm run eval:supplier` runs the Gemini evaluation.
 
 ## License
 
