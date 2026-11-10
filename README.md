@@ -4,6 +4,8 @@
 
 Reserve now with PayPal. Get charged only when your batch is within 20 days of shipping.
 
+Demo video: https://youtu.be/nm4AaYAwpr0
+
 Live at https://batchday.onrender.com (PayPal sandbox). The free instance takes about a minute to wake after 15 minutes idle.
 
 ![The Batchday production plan in a Bryntum Gantt: ship batch 1 is green and charged, batch 2 is gray and waiting for its charge window, batch 3 has no buyers yet](src/client/landing/assets/hero-gantt.webp)
