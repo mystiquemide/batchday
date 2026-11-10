@@ -77,6 +77,7 @@ AI evaluation: 12 of 12 supplier messages handled as expected (clear delay, earl
 
 | What | ID |
 |---|---|
+| Hosted run, Gantt edit held at the charge preview, then confirmed | Orders `6X727462YC825734E`, `99A23466UN205081U` |
 | Hosted run, merchant-initiated stored-credential charges, batch 1 charged | Orders `6VM006656V670445U`, `1XG96684U1823264M` |
 | Earlier hosted runs | Orders `41N44309SF915910W`, `9E814319X6255673V`, `0SE11503D52576713`, `9UA241508V2781913` |
 | Plan change charged two buyers | Orders `0SJ11939BJ923791S`, `0M863347WK575080W` (GET returns COMPLETED) |
