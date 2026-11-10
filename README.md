@@ -4,11 +4,11 @@
 
 Reserve now with PayPal. Get charged only when your batch is within 20 days of shipping.
 
-Demo video: https://youtu.be/UvQ3j5sHFhE
+Demo video (2 min, includes the live app): https://youtu.be/UvQ3j5sHFhE
 
 Live at https://batchday.onrender.com (PayPal sandbox). The free instance takes about a minute to wake after 15 minutes idle.
 
-![The Batchday production plan in a Bryntum Gantt: ship batch 1 is green and charged, batch 2 is gray and waiting for its charge window, batch 3 has no buyers yet](src/client/landing/assets/hero-gantt.webp)
+![The live Batchday console: batch 1's 20-day charge window is green and its two buyers are charged, batch 2's window is gray and opens Nov 24](docs/gantt-charged.webp)
 
 ## The story
 
@@ -40,14 +40,16 @@ Any batch now within 20 days of shipping charges its buyers through PayPal, once
 | PayPal sends a capture webhook | The charge log shows "Confirmed by PayPal webhook". A denied or reversed capture is flagged on the buyer and never retried automatically |
 | Seller exports the charge log | CSV with every PayPal order, capture, debug ID, and webhook status |
 
+![A Gantt edit held for the seller: batch 1 would ship in 19 days, 2 buyers would be charged, $98.00, with Confirm and Undo buttons](docs/charge-preview.webp)
+
 ## Try it in 2 minutes
 
 1. Open https://batchday.onrender.com/app and click Start a workspace. You get a template plan with three batches.
 2. Copy the buyer link and open it in another window. Click Reserve with PayPal and approve with a PayPal sandbox personal account.
-3. Back in the console, paste this into Supplier updates and click Read with AI:
+3. Back in the console, double-click the Duration of "Freight, batch 1", change 7 to 2, and press Enter. Bryntum reschedules batch 1, its charge window turns green, and a banner shows who would be charged and how much. Click Undo change to see the plan restored, or Confirm and save to charge.
+4. Or let AI do it: paste this into Supplier updates, click Read with AI, then Apply to plan.
    `Freight for batch 1 will take 5 days less than planned.`
-4. The preview shows batch 1 moving inside 20 days. Click Apply to plan.
-5. The charge log shows a captured PayPal order. Batches 2 and 3 stay uncharged with their charge-opening dates.
+5. The charge log shows the captured PayPal order. Batches 2 and 3 stay uncharged, and their gray bands show the day charging opens.
 
 Data resets when the free instance restarts. Start a new workspace if yours is gone.
 
