@@ -132,6 +132,29 @@ Supplier email ─▶ Gemini ─▶ proposal ─▶ seller clicks Apply ─▶ B
 - `src/server/supplier.ts` and `src/server/gemini.ts` handle supplier parsing, the quote check and notice drafts.
 - `src/server/webhooks.ts` verifies PayPal webhook signatures.
 
+## FAQ
+
+**Why build this?**
+PayPal's 20-day pre-order rule is real, and it has already frozen money for small publishers. The date it depends on comes out of a production schedule that moves every week, so nobody can track it reliably by hand.
+
+**Who needs it?**
+Small makers who sell physical goods in batches: board game publishers, indie hardware, apparel drops, and small-batch food.
+
+**How is this different from Kickstarter or a spreadsheet?**
+Kickstarter and Backerkit charge everyone on one campaign date. Checkout charges right away. A spreadsheet depends on someone remembering. Batchday ties each buyer's charge to the live ship date of their own batch.
+
+**Why now?**
+PayPal Vault v3 can save a wallet with no purchase and charge it later, and current LLMs can turn messy supplier emails into structured proposals reliably enough to be useful.
+
+**Why Bryntum?**
+The ship date has to be computed from a chain of dependent tasks, so drawing bars isn't enough. Bryntum's scheduling engine produces every ship date, and even AI edits go through it before any charge.
+
+**Why can't the AI charge anyone?**
+AI is good at reading emails and bad at being accountable for money. Gemini only proposes changes, the seller applies them, and a deterministic engine decides who gets charged.
+
+**What's next?**
+PayPal live-mode approval for vaulting, automatic buyer emails, and several products sharing one factory schedule.
+
 ## Run locally
 
 You need Node 22, a [PayPal developer](https://developer.paypal.com) sandbox REST app, a sandbox personal account to pay with, and a [Gemini API key](https://aistudio.google.com/apikey).
