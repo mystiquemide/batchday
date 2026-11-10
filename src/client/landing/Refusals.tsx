@@ -1,7 +1,7 @@
 import { Ban, CalendarX2, CopyX, MailWarning, ShieldX, TriangleAlert, UserX } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-const TESTS = 'https://github.com/mystiquemide/batchday/blob/main/test';
+const TESTS = 'https://github.com/mystiquemide/batchday2/blob/main/test';
 
 interface Row {
   icon: LucideIcon;

@@ -1,6 +1,6 @@
 import { PackageCheck } from 'lucide-react';
 
-const REPO_URL = 'https://github.com/mystiquemide/batchday';
+const REPO_URL = 'https://github.com/mystiquemide/batchday2';
 
 export function Footer() {
   return (
