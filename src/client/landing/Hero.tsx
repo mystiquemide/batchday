@@ -30,13 +30,13 @@ export function Hero() {
               src={ganttShot}
               width={2800}
               height={1282}
-              alt="Batchday production plan in a Bryntum Gantt. Ship batch 1 on Nov 27 is green with charging open and 1 buyer charged. Ship batch 2 on Dec 12 is gray, charging opens Nov 22, 1 buyer waiting. Ship batch 3 on Dec 22 has no buyers yet."
+              alt="Batchday production plan in a Bryntum Gantt. Ship batch 1 on Nov 29 sits at the end of a green 20-day charge window, charging open, 2 buyers charged. Ship batch 2 on Dec 14 has a gray window, charging opens Nov 24, 1 buyer waiting. Ship batch 3 on Dec 24 has no buyers yet."
               fetchPriority="high"
               decoding="async"
             />
           </div>
           <figcaption className="lp-caption">
-            Captured from the Batchday console, where each ship milestone shows when charging opens and who has been charged
+            Captured from the Batchday console, where each ship milestone carries its 20-day charge window and shows who has been charged
           </figcaption>
         </figure>
       </div>
