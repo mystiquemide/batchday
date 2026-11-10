@@ -150,7 +150,7 @@ Fill in `.env` before starting:
 | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` | Credentials of your sandbox REST app |
 | `GEMINI_API_KEY` | Used for supplier updates and notice drafts |
 | `PUBLIC_BASE_URL` | Where PayPal sends the buyer back after approval. Use `http://localhost:3000` locally |
-| `PAYPAL_WEBHOOK_ID` | Optional. Needs a public URL. Run `npm run webhook:register` after deploying |
+| `PAYPAL_WEBHOOK_ID` | Optional. Needs a public URL. After deploying, run `npm run webhook:register -- https://your-app.onrender.com` |
 
 Open http://localhost:3000 for the landing page and http://localhost:3000/app for the seller console. `npm run check:paypal` confirms your PayPal credentials, `npm test` runs the test suite, and `npm run eval:supplier` runs the Gemini evaluation.
 
