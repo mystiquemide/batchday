@@ -23,19 +23,22 @@ Batchday ties every buyer's charge date to the seller's live production plan, wi
 The buyer saves their PayPal wallet without paying.
 The seller's plan is a Bryntum Gantt with sourcing, factory, QC, freight, and one ship milestone per batch, linked by dependencies.
 When a task moves, Bryntum's scheduling engine reschedules everything after it. The server checks Bryntum's dates against the dependencies and saves them, and it never reschedules on its own.
-Each ship milestone shows its window state in the Gantt: ship date, the day charging opens, and buyers charged or waiting, colored by state.
+Each ship milestone shows its 20-day charge window as a band on the timeline, plus its ship date, the day charging opens, and buyers charged or waiting, colored by state.
+A change that would charge buyers or break a charged buyer's promise is held for the seller: the console shows who would be charged and how much, then Confirm saves it and Undo reloads the last saved plan.
 Any batch now within 20 days of shipping charges its buyers through PayPal, once each.
 
 | Operation | Result |
 |---|---|
 | Buyer clicks Reserve with PayPal | Wallet saved at PayPal, nothing charged, buyer assigned to the earliest batch with room |
 | Seller drags a task, edits a duration, or applies a supplier update | Downstream tasks reschedule, the plan is validated and saved |
+| A drag would charge buyers or push charged buyers past 20 days | Nothing saves until the seller confirms. The banner shows buyers and the dollar amount, and Undo restores the last saved plan |
 | Batch ship date within 20 days | Every reserved buyer in that batch is charged (Orders v2 with the saved vault id) |
 | Batch ship date more than 20 days away | No PayPal call. The buyer sees the ship date and the day charging opens |
 | Buyer cancels before being charged | Saved wallet deleted at PayPal, so PayPal itself refuses any later charge |
 | Plan slips after a buyer was charged | Buyer marked at risk, seller gets a one-click refund and a drafted notice |
 | Supplier email pasted into the inbox | Gemini proposes changes with exact quotes. Nothing moves until the seller applies |
-| Seller exports the charge log | CSV with every PayPal order, capture, and debug ID |
+| PayPal sends a capture webhook | The charge log shows "Confirmed by PayPal webhook". A denied or reversed capture is flagged on the buyer and never retried automatically |
+| Seller exports the charge log | CSV with every PayPal order, capture, debug ID, and webhook status |
 
 ## Try it in 2 minutes
 
@@ -64,6 +67,8 @@ Data resets when the free instance restarts. Start a new workspace if yours is g
 | Unsigned PayPal webhook | Ignored, nothing changes | [webhook.test.ts](test/webhook.test.ts), and a forged event sent to the live app returned `ignored_unverified` |
 | AI notice draft invents a date | Replaced by a fact-only template | [risk.test.ts](test/risk.test.ts) |
 | One client spams reservations | Rate limited before any PayPal call | [guard.test.ts](test/guard.test.ts) |
+| Seller accidentally drags batch 1 inside the window | Held at a Confirm / Undo banner showing 2 buyers and $98.00, nothing charged | [preview.test.ts](test/preview.test.ts) and a browser run where Undo restored the plan with 0 charge attempts |
+| PayPal denies a capture after the fact | Buyer flagged, state kept, no automatic retry | [webhook.test.ts](test/webhook.test.ts) |
 | A charge log cell starts with `=` | Neutralized in the CSV so a spreadsheet cannot run it | [csv.test.ts](test/csv.test.ts) |
 
 AI evaluation: 12 of 12 supplier messages handled as expected (clear delay, early finish, two changes, unknown task, no change, ambiguous, injection, other date format, completion, chatter, contradiction, Spanish). Run `npm run eval:supplier`.
@@ -104,12 +109,12 @@ These IDs belong to the PayPal sandbox merchant app used to build Batchday. Run 
 
 Every reservation, charge, cancellation, and refund shown in the app comes from PayPal sandbox responses. Charges are created only by the deterministic engine, never by AI output. Gemini proposes schedule changes and drafts notices, the server validates both, and the seller applies them. The only static content is the starting plan, labeled as a template.
 
-97 tests across 10 files run in CI on every push: `npm test`.
+102 tests across 11 files run in CI on every push: `npm test`.
 
 ## Built with
 
 - PayPal: Vault v3 setup and payment tokens (deferred usage), Orders v2 with `vault_id` and a merchant-initiated stored credential, Payments v2 refunds, and webhooks with signature verification, via the APIMatic-generated `@paypal/paypal-server-sdk`
-- Bryntum Gantt Community 8.0.0: dependency scheduling that produces every ship date, plus the window state on each ship milestone
+- Bryntum Gantt Community 8.0.0: dependency scheduling that produces every ship date, the 20-day charge window drawn on the timeline, and the window state on each ship milestone
 - Gemini (`gemini-3.6-flash`, fallback `gemini-3.5-flash-lite`): schema-constrained supplier parsing and notice drafts
 - Render for hosting, with React, Vite, Express, and SQLite
 

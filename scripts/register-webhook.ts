@@ -33,7 +33,7 @@ const res = await fetch(`${base}/v1/notifications/webhooks`, {
   headers: { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' },
   body: JSON.stringify({
     url,
-    event_types: ['VAULT.PAYMENT-TOKEN.DELETED', 'PAYMENT.CAPTURE.COMPLETED', 'PAYMENT.CAPTURE.DENIED', 'PAYMENT.CAPTURE.REFUNDED'].map((name) => ({ name })),
+    event_types: ['VAULT.PAYMENT-TOKEN.DELETED', 'PAYMENT.CAPTURE.COMPLETED', 'PAYMENT.CAPTURE.DENIED', 'PAYMENT.CAPTURE.PENDING', 'PAYMENT.CAPTURE.REVERSED', 'PAYMENT.CAPTURE.REFUNDED'].map((name) => ({ name })),
   }),
 });
 const body = (await res.json()) as { id?: string; message?: string; details?: unknown };

@@ -195,12 +195,23 @@ export const PlanGantt = forwardRef<PlanGanttHandle, Props>(function PlanGantt(
     ],
     taskRenderer: ({ taskRecord, renderData }: { taskRecord: any; renderData: any }) => {
         const info = shipInfo(taskRecord);
-        if (info) {
-          const cls = `bd-ship bd-ship-${info.state}`;
-          if (typeof renderData.cls === 'string') renderData.cls += ` ${cls}`;
-          else for (const c of cls.split(' ')) renderData.cls[c] = 1;
-        }
-        return '';
+        if (!info) return '';
+        const cls = `bd-ship bd-ship-${info.state}`;
+        if (typeof renderData.cls === 'string') renderData.cls += ` ${cls}`;
+        else for (const c of cls.split(' ')) renderData.cls[c] = 1;
+        // The 20-day charge window, drawn on the timeline as a band ending at the ship milestone.
+        // Community edition has no time ranges feature, so the band hangs off the milestone itself.
+        const gantt: any = ref.current?.instance;
+        if (!gantt?.getCoordinateFromDate) return '';
+        const width = gantt.getCoordinateFromDate(info.ship) - gantt.getCoordinateFromDate(info.opens);
+        if (!(width > 0)) return '';
+        return {
+          tag: 'div',
+          className: `bd-window bd-window-${info.inWindow ? 'open' : 'closed'}`,
+          style: { width: `${width}px` },
+          dataset: { layoutIgnore: 'true' },
+          children: [{ tag: 'span', className: 'bd-window-label', text: info.inWindow ? 'Charging open' : `Charging opens ${dayMonth(info.opens)}` }],
+        };
       },
     taskTooltipFeature: {
         template: ({ taskRecord }: { taskRecord: any }) => {

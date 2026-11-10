@@ -120,9 +120,24 @@ export async function handleWebhook(
       break;
     }
     case 'PAYMENT.CAPTURE.COMPLETED':
+    case 'PAYMENT.CAPTURE.PENDING':
     case 'PAYMENT.CAPTURE.DENIED':
-      // Charges are recorded from the Orders response; these events are kept for the audit trail only.
+    case 'PAYMENT.CAPTURE.REVERSED': {
+      // The charge itself is recorded from the Orders response. PayPal's later word on the capture is
+      // reconciled onto that attempt so the charge log shows what PayPal confirmed, not just what we sent.
+      if (!res.id) break;
+      const status = event.event_type.slice('PAYMENT.CAPTURE.'.length);
+      changed += db
+        .prepare('UPDATE charge_attempt SET webhook_status = ?, webhook_at = ? WHERE capture_id = ?')
+        .run(status, now.toISOString(), res.id).changes;
+      if (status === 'DENIED' || status === 'REVERSED') {
+        // Money did not arrive or was pulled back. Flag it for the seller and never retry a charge on our own.
+        db.prepare(
+          `UPDATE reservation SET message = ? WHERE capture_id = ? AND state IN ('CHARGED','AT_RISK')`,
+        ).run(`PayPal reported this capture ${status}. Check the payment in PayPal before shipping.`, res.id);
+      }
       break;
+    }
     default:
       db.prepare('UPDATE webhook_event SET processed_note = ? WHERE id = ?').run('unhandled type', event.id);
       return { outcome: 'ignored_type', changed: 0 };

@@ -65,6 +65,9 @@ export interface ChargeLogRow {
   detail: string | null;
   createdAt: string;
   finishedAt: string | null;
+  /** Capture status PayPal later reported by a verified webhook (COMPLETED, DENIED, REVERSED...). */
+  webhookStatus: string | null;
+  webhookAt: string | null;
 }
 
 export interface PlanDependency {

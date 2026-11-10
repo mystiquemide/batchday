@@ -90,3 +90,19 @@ details { margin-top: 12px; font-size: 14px; }
 .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .panel-head h2 { margin: 0; }
 .panel-head .small-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 0; }
+
+/* Charge preview: a plan change that moves money waits for the seller. */
+.preview { display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; margin: 0 0 12px; padding: 14px 18px; border: 1px solid #D13200; border-left-width: 4px; border-radius: 8px; background: #FFF6F2; }
+.preview strong { color: #15191E; }
+.preview ul { margin: 6px 0 0; padding-left: 18px; color: #15191E; }
+.preview li { margin: 2px 0; }
+.preview-total { margin: 8px 0 0; font-weight: 600; color: #D13200; }
+.preview-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* 20-day charge window drawn on the timeline, ending at each ship milestone. */
+.b-gantt-task-wrap:has(.bd-window) .b-gantt-task, .b-gantt-task.bd-ship { overflow: visible; }
+.bd-window { position: absolute; right: 50%; top: 50%; height: 22px; transform: translateY(-50%); border-radius: 4px; pointer-events: none; z-index: -1; display: flex; align-items: center; padding-left: 8px; box-sizing: border-box; white-space: nowrap; }
+.bd-window-closed { background: repeating-linear-gradient(135deg, rgba(96,100,108,0.10) 0 6px, rgba(96,100,108,0.04) 6px 12px); border: 1px dashed rgba(96,100,108,0.45); }
+.bd-window-open { background: rgba(13,153,38,0.12); border: 1px solid rgba(13,153,38,0.55); }
+.bd-window-label { font-size: 11px; font-weight: 600; color: #60646C; }
+.bd-window-open .bd-window-label { color: #0A7A1E; }

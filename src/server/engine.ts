@@ -277,5 +277,7 @@ export function chargeLog(db: Db, workspaceId: string, limit = 200): ChargeLogRo
     detail: a.detail as string | null,
     createdAt: a.created_at as string,
     finishedAt: a.finished_at as string | null,
+    webhookStatus: (a.webhook_status as string | null) ?? null,
+    webhookAt: (a.webhook_at as string | null) ?? null,
   }));
 }

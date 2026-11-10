@@ -110,6 +110,8 @@ const COLUMN_MIGRATIONS: { table: string; column: string; ddl: string }[] = [
   { table: 'reservation', column: 'refunded_at', ddl: 'ALTER TABLE reservation ADD COLUMN refunded_at TEXT' },
   { table: 'reservation', column: 'refund_debug_id', ddl: 'ALTER TABLE reservation ADD COLUMN refund_debug_id TEXT' },
   { table: 'reservation', column: 'notified_ship_date', ddl: 'ALTER TABLE reservation ADD COLUMN notified_ship_date TEXT' },
+  { table: 'charge_attempt', column: 'webhook_status', ddl: 'ALTER TABLE charge_attempt ADD COLUMN webhook_status TEXT' },
+  { table: 'charge_attempt', column: 'webhook_at', ddl: 'ALTER TABLE charge_attempt ADD COLUMN webhook_at TEXT' },
   { table: 'workspace', column: 'plan_version', ddl: 'ALTER TABLE workspace ADD COLUMN plan_version INTEGER NOT NULL DEFAULT 1' },
 ];
 

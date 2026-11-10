@@ -6,6 +6,7 @@ import { PlanGantt, type PlanGanttHandle } from './PlanGantt';
 import { SupplierInbox } from './SupplierInbox';
 import { Notices } from './Notices';
 import { StateBadge } from './StateBadge';
+import { previewCharges, type ChargePreview } from '../shared/preview';
 
 type SaveState =
   | { kind: 'idle' }
@@ -36,6 +37,8 @@ export function Console() {
   const [save, setSave] = useState<SaveState>({ kind: 'idle' });
   const [refunding, setRefunding] = useState<string | null>(null);
   const [refundError, setRefundError] = useState<string | null>(null);
+  /** A plan change that would charge buyers or put charged buyers at risk waits here for the seller. */
+  const [pending, setPending] = useState<{ tasks: TaskScheduleInput[]; preview: ChargePreview } | null>(null);
 
   async function refund(reservationId: string) {
     setRefunding(reservationId);
@@ -98,8 +101,41 @@ export function Console() {
     }
   }
 
-  // Saves run one at a time so each carries the version returned by the previous one.
+  // A drag that would move money is held until the seller confirms it. Supplier updates were
+  // already previewed and applied on purpose, so they save straight away.
   function saveSchedule(tasks: TaskScheduleInput[]) {
+    if (data && !applying.current) {
+      const preview = previewCharges({
+        schedule: tasks,
+        shipTasks: data.plan.tasks.filter((t) => t.kind === 'ship_batch').map((t) => ({ id: t.id, batchNumber: t.batchNumber! })),
+        reservations: data.reservations,
+        unitPrice: Number(data.campaign.unitPrice),
+        today: new Date().toISOString().slice(0, 10),
+      });
+      if (preview.toCharge > 0 || preview.toRisk > 0) {
+        setPending({ tasks, preview });
+        return;
+      }
+    }
+    setPending(null);
+    commitSchedule(tasks);
+  }
+
+  function confirmPending() {
+    if (!pending) return;
+    const { tasks } = pending;
+    setPending(null);
+    commitSchedule(tasks);
+  }
+
+  async function undoPending() {
+    setPending(null);
+    setSave({ kind: 'idle' });
+    await load(); // Bryntum reloads the last saved plan, undoing the whole cascade
+  }
+
+  // Saves run one at a time so each carries the version returned by the previous one.
+  function commitSchedule(tasks: TaskScheduleInput[]) {
     queue.current = queue.current.then(async () => {
       setSave({ kind: 'saving' });
       try {
@@ -199,6 +235,30 @@ export function Console() {
           </span>
         )}
       </div>
+
+      {pending && (
+        <div className="preview" role="alertdialog" aria-labelledby="preview-title">
+          <div>
+            <strong id="preview-title">Nothing is saved yet. This change moves money.</strong>
+            <ul>
+              {pending.preview.batches.filter((b) => b.toCharge || b.toRisk).map((b) => (
+                <li key={b.batch}>
+                  Batch {b.batch} would ship {formatDate(b.shipDate)}, {b.daysToShip} days out.
+                  {b.toCharge > 0 && ` ${b.toCharge} buyer${b.toCharge === 1 ? '' : 's'} charged now.`}
+                  {b.toRisk > 0 && ` ${b.toRisk} charged buyer${b.toRisk === 1 ? '' : 's'} pushed past the 20-day promise.`}
+                </li>
+              ))}
+            </ul>
+            {pending.preview.toCharge > 0 && (
+              <p className="preview-total">PayPal charges ${pending.preview.amount.toFixed(2)} {data.campaign.currency} if you confirm.</p>
+            )}
+          </div>
+          <div className="preview-actions">
+            <button className="primary" onClick={confirmPending}>Confirm and save</button>
+            <button className="secondary" onClick={undoPending}>Undo change</button>
+          </div>
+        </div>
+      )}
 
       <div className="legend" aria-label="Ship milestone colors">
         <span><i className="sw sw-waiting" /> Outside 20-day window</span>

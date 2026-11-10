@@ -15,10 +15,10 @@ const OUTCOME: Record<ChargeLogRow['outcome'], string> = {
 
 function exportCsv(rows: ChargeLogRow[]) {
   const csv = toCsv(
-    ['time', 'buyer', 'batch', 'batch_ships', 'amount_usd', 'outcome', 'attempt', 'http_status', 'paypal_order', 'paypal_capture', 'paypal_debug_id', 'detail'],
+    ['time', 'buyer', 'batch', 'batch_ships', 'amount_usd', 'outcome', 'attempt', 'http_status', 'paypal_order', 'paypal_capture', 'paypal_debug_id', 'detail', 'paypal_webhook_status'],
     rows.map((r) => [
       r.finishedAt ?? r.createdAt, r.buyerEmail, r.batchNumber, r.shipDate, r.amount, r.outcome, r.attemptNo,
-      r.httpStatus, r.orderId, r.captureId, r.paypalDebugId, r.detail,
+      r.httpStatus, r.orderId, r.captureId, r.paypalDebugId, r.detail, r.webhookStatus,
     ]),
   );
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -62,6 +62,11 @@ export function ChargeLog({ rows }: { rows: ChargeLogRow[] }) {
                     <span className={`badge o-${r.outcome.toLowerCase()}`}>{OUTCOME[r.outcome]}</span>
                     {r.attemptNo > 1 && <div className="muted small">Attempt {r.attemptNo}</div>}
                     {r.detail && <div className="muted small">{r.detail}</div>}
+                    {r.webhookStatus && (
+                      <div className={r.webhookStatus === 'COMPLETED' ? 'ok small' : 'error small'}>
+                        {r.webhookStatus === 'COMPLETED' ? 'Confirmed by PayPal webhook' : `PayPal webhook: ${r.webhookStatus.toLowerCase()}`}
+                      </div>
+                    )}
                   </td>
                   <td className="mono">{r.orderId ?? '-'}</td>
                   <td className="mono">{r.captureId ?? '-'}</td>

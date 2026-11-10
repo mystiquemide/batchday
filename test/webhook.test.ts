@@ -92,4 +92,28 @@ describe('PayPal webhooks (FR-021)', () => {
     const res = await send({ id: 'WH-6', event_type: 'CUSTOMER.DISPUTE.CREATED', resource: {} });
     expect(await res.json()).toEqual({ outcome: 'ignored_type' });
   });
+
+  it('marks a captured charge as confirmed when PayPal sends CAPTURE.COMPLETED', async () => {
+    const r = reserve('CHARGED', 'VT-5', 'CAP-5');
+    db.prepare(
+      `INSERT INTO charge_attempt (workspace_id, reservation_id, attempt_no, request_id, amount, ship_date, outcome, capture_id, created_at)
+       VALUES (?, ?, 1, 'bd-x-1', '49.00', '2026-11-28', 'COMPLETED', 'CAP-5', ?)`,
+    ).run(ws, r, NOW.toISOString());
+    const res = await send({ id: 'WH-5', event_type: 'PAYMENT.CAPTURE.COMPLETED', resource: { id: 'CAP-5', status: 'COMPLETED' } });
+    expect(await res.json()).toEqual({ outcome: 'processed' });
+    expect(db.prepare('SELECT webhook_status s FROM charge_attempt WHERE capture_id = ?').get('CAP-5')).toEqual({ s: 'COMPLETED' });
+    expect(stateOf(r)).toBe('CHARGED');
+  });
+
+  it('flags a denied capture for the seller without changing state or retrying', async () => {
+    const r = reserve('CHARGED', 'VT-6', 'CAP-6');
+    db.prepare(
+      `INSERT INTO charge_attempt (workspace_id, reservation_id, attempt_no, request_id, amount, ship_date, outcome, capture_id, created_at)
+       VALUES (?, ?, 1, 'bd-y-1', '49.00', '2026-11-28', 'COMPLETED', 'CAP-6', ?)`,
+    ).run(ws, r, NOW.toISOString());
+    await send({ id: 'WH-6', event_type: 'PAYMENT.CAPTURE.DENIED', resource: { id: 'CAP-6', status: 'DENIED' } });
+    expect(stateOf(r)).toBe('CHARGED');
+    expect((db.prepare('SELECT message m FROM reservation WHERE id = ?').get(r) as { m: string }).m).toMatch(/DENIED/);
+    expect(db.prepare('SELECT COUNT(*) n FROM charge_attempt WHERE reservation_id = ?').get(r)).toEqual({ n: 1 });
+  });
 });
