@@ -4,7 +4,7 @@
 
 Reserve now with PayPal. Get charged only when your batch is within 20 days of shipping.
 
-Demo video: https://youtu.be/nm4AaYAwpr0
+Demo video: https://youtu.be/UvQ3j5sHFhE
 
 Live at https://batchday.onrender.com (PayPal sandbox). The free instance takes about a minute to wake after 15 minutes idle.
 
