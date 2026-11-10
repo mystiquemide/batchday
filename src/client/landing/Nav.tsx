@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, Menu, PackageCheck, X } from 'lucide-react';
 
-const REPO_URL = 'https://github.com/mystiquemide/batchday2';
+const REPO_URL = 'https://github.com/mystiquemide/batchday';
 
 function Links({ onNavigate }: { onNavigate?: () => void }) {
   return (

@@ -1,6 +1,6 @@
 # Batchday
 
-[![CI](https://github.com/mystiquemide/batchday2/actions/workflows/ci.yml/badge.svg)](https://github.com/mystiquemide/batchday2/actions/workflows/ci.yml)
+[![CI](https://github.com/mystiquemide/batchday/actions/workflows/ci.yml/badge.svg)](https://github.com/mystiquemide/batchday/actions/workflows/ci.yml)
 
 Reserve now with PayPal. Get charged only when your batch is within 20 days of shipping.
 
@@ -168,7 +168,7 @@ PayPal live-mode approval for vaulting, automatic buyer emails, and several prod
 You need Node 22, a [PayPal developer](https://developer.paypal.com) sandbox REST app, a sandbox personal account to pay with, and a [Gemini API key](https://aistudio.google.com/apikey).
 
 ```bash
-git clone https://github.com/mystiquemide/batchday2 && cd batchday2
+git clone https://github.com/mystiquemide/batchday && cd batchday
 npm install
 cp .env.example .env
 npm run build && npm start
